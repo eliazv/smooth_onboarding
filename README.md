@@ -4,10 +4,11 @@
 It focuses on a clean first-run experience, shared-axis page motion, dark mode adaptation,
 and an API that stays easy to integrate in real apps.
 
+![Onboarding Preview](assets/readme/video_example.gif)
+
 ## Preview
 
-The example app uses built-in shapes and icons, so the repository stays lightweight
-and does not need extra illustration assets.
+See it in action: the example app uses built-in shapes and icons to stay lightweight while providing a sleek, smooth onboarding experience.
 
 ## Features
 
