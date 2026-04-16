@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- Improved documentation visibility by adding a preview GIF at the top of the `README.md`.
+- Moved preview assets to `assets/readme/` for better project organization.
+
 ## 0.2.0
 
 - Reworked page transition: true simultaneous horizontal slide via `PageView` — no fade, no overlap.
