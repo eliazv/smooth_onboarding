@@ -1,18 +1,27 @@
 # smooth_onboarding
 
 `smooth_onboarding` is a reusable Flutter onboarding package designed for pub.dev.
-It focuses on a clean first-run experience, animated progress, dark mode adaptation,
+It focuses on a clean first-run experience, shared-axis page motion, dark mode adaptation,
 and an API that stays easy to integrate in real apps.
+
+## Preview
+
+The example app uses built-in shapes and icons, so the repository stays lightweight
+and does not need extra illustration assets.
 
 ## Features
 
 - Animated progress bar with page-based progress.
 - Optional back button that appears from the second page onward.
-- Floating primary button that changes from `Avanti` to `Inizia` on the last page.
+- Floating primary button that changes from `Next` to `Get started` on the last page.
 - First-launch persistence via `SharedPreferences`.
 - Dark mode aware default styling.
 - Fully customizable page content with any widget.
 - Customizable labels (`next`, `done`, `back` tooltip).
+- Optional back button toggle (`showBackButton`).
+- Configurable animation durations and progress semantics label.
+- Configurable page transition style with shared-axis motion as default.
+- Modern completion animation that slides the whole screen upward.
 - External reload trigger for programmatic onboarding reset.
 
 ## Installation
@@ -23,16 +32,6 @@ and an API that stays easy to integrate in real apps.
 dependencies:
   smooth_onboarding: ^0.1.0
 ```
-
-### Local path dependency (current repository)
-
-```yaml
-dependencies:
-  smooth_onboarding:
-    path: ../smooth_onboarding
-```
-
-Replace the path dependency with the pub.dev version when you publish.
 
 ## Usage
 
@@ -50,22 +49,20 @@ class AppRoot extends StatelessWidget {
         storageKey: OnboardingStorage.defaultStorageKey,
         pages: const [
           OnboardingPage(
-            title: 'Benvenuto',
-            body: Text('Scopri l\'app in pochi passaggi.'),
+            title: 'Welcome',
+            body: Text('Discover the app in a few steps.'),
           ),
           OnboardingPage(
-            title: 'Personalizza',
+            title: 'Customize',
             body: Icon(Icons.palette_outlined, size: 72),
-            buttonLabel: 'Avanti',
           ),
           OnboardingPage(
-            title: 'Pronto',
-            body: Text('Hai finito il setup iniziale.'),
-            buttonLabel: 'Inizia',
+            title: 'Ready',
+            body: Text('Initial setup is complete.'),
           ),
         ],
         child: const Scaffold(
-          body: Center(child: Text('Contenuto principale dell\'app')),
+          body: Center(child: Text('Main app content')),
         ),
       ),
     );
@@ -89,9 +86,18 @@ You can customize texts, colors and layout through page data, labels and theme:
 ```dart
 OnboardingGate(
   pages: pages,
+  showBackButton: true,
   nextButtonLabel: 'Next',
-  doneButtonLabel: 'Start',
+  doneButtonLabel: 'Get started',
   backButtonTooltip: 'Back',
+  progressSemanticsLabel: 'Onboarding progress',
+  progressAnimationDuration: const Duration(milliseconds: 360),
+  contentAnimationDuration: const Duration(milliseconds: 300),
+  contentAnimationCurve: Curves.easeOutCubic,
+  pageTransitionType: OnboardingPageTransitionType.slideHorizontal,
+  buttonLabelAnimationDuration: const Duration(milliseconds: 240),
+  closeAnimationDuration: const Duration(milliseconds: 420),
+  closeAnimationCurve: Curves.easeInOutCubic,
   theme: const OnboardingTheme(
     backgroundColor: Colors.white,
     progressColor: Colors.blue,
@@ -120,57 +126,18 @@ The package is designed around these defaults:
 - White background in light mode.
 - Dark gray background in dark mode.
 - Blue progress bar and blue primary button.
-- Bottom floating action button that changes label on the last page.
-- Small back arrow on the progress row, hidden on the first page.
-- Animated transitions when page content changes.
+- Shared-axis transitions between pages.
+- Full-screen close animation that moves the onboarding upward.
+- Small back arrow with a compact hit area.
 
-## Verify locally
+## Development
 
-Run these commands from the package root:
+For local checks, run the usual Flutter commands from the package root:
 
 ```bash
-flutter pub get
 flutter analyze
 flutter test
-dart pub publish --dry-run
 ```
-
-## View it graphically
-
-To run the demo app and inspect the onboarding flow visually:
-
-```bash
-cd example
-flutter create .
-flutter run -d windows
-```
-
-If you want to test dark mode quickly, switch your system theme to dark and
-restart the app. The onboarding background will switch to dark gray.
-
-## Publish to pub.dev
-
-1. Verify links in `pubspec.yaml` (`homepage`, `repository`, `issue_tracker`).
-2. Add at least one screenshot or GIF in this README (recommended for pub points).
-3. Ensure a clean git state (`git status` should be clean).
-4. Run a final check:
-
-```bash
-dart pub publish --dry-run
-```
-
-5. Publish:
-
-```bash
-dart pub publish
-```
-
-## Publishing checklist
-
-- Verify repository URLs in `pubspec.yaml`.
-- Add a GIF or screenshot in the README for pub.dev score.
-- Run `dart format .` and `flutter analyze` before publishing.
-- Verify with `dart pub publish --dry-run`.
 
 ## License
 

@@ -16,7 +16,7 @@ The app shows:
 
 - onboarding only on first launch;
 - animated top progress bar;
-- `Avanti`/`Inizia` button behavior;
+- `Next`/`Get started` button behavior;
 - back arrow visibility from the second page;
 - dark mode adaptation.
 

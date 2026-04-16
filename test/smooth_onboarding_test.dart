@@ -65,15 +65,34 @@ void main() {
       ),
     );
 
-    expect(find.text('Avanti'), findsOneWidget);
-    expect(find.text('Inizia'), findsNothing);
+    expect(find.text('Next'), findsOneWidget);
+    expect(find.text('Get started'), findsNothing);
     expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
 
-    await tester.tap(find.text('Avanti'));
+    await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Inizia'), findsOneWidget);
+    expect(find.text('Get started'), findsOneWidget);
     expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
+  });
+
+  testWidgets('back button can be disabled', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SmoothOnboarding(
+          showBackButton: false,
+          pages: const <OnboardingPage>[
+            OnboardingPage(title: 'First', body: Text('Page one')),
+            OnboardingPage(title: 'Second', body: Text('Page two')),
+          ],
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
   });
 
   testWidgets('custom labels are applied', (WidgetTester tester) async {
@@ -146,6 +165,6 @@ void main() {
     triggerReload();
     await tester.pumpAndSettle();
 
-    expect(find.text('Inizia'), findsOneWidget);
+    expect(find.text('Get started'), findsOneWidget);
   });
 }

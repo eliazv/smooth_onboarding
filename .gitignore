@@ -4,8 +4,9 @@
 build/
 pubspec.lock
 
-# Local planning note, not part of package source.
-partenza.md
+# Local workspace files not meant to be committed.
+.local/
+onboarding-preview.png
 
 # Keep repo focused on package + portable example source.
 example/android/

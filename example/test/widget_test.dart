@@ -11,6 +11,6 @@ void main() {
     await tester.pumpWidget(const ExampleApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Avanti'), findsOneWidget);
+    expect(find.text('Next'), findsOneWidget);
   });
 }

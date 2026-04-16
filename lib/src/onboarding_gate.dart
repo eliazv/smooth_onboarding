@@ -15,9 +15,18 @@ class OnboardingGate extends StatefulWidget {
     this.theme,
     this.storageKey = OnboardingStorage.defaultStorageKey,
     this.persistCompletion = true,
-    this.nextButtonLabel = 'Avanti',
-    this.doneButtonLabel = 'Inizia',
-    this.backButtonTooltip = 'Indietro',
+    this.nextButtonLabel = 'Next',
+    this.doneButtonLabel = 'Get started',
+    this.backButtonTooltip = 'Back',
+    this.progressSemanticsLabel = 'Onboarding progress',
+    this.showBackButton = true,
+    this.progressAnimationDuration = const Duration(milliseconds: 320),
+    this.contentAnimationDuration = const Duration(milliseconds: 280),
+    this.buttonLabelAnimationDuration = const Duration(milliseconds: 220),
+    this.contentAnimationCurve = Curves.easeOutCubic,
+    this.pageTransitionType = OnboardingPageTransitionType.sharedAxis,
+    this.closeAnimationDuration = const Duration(milliseconds: 420),
+    this.closeAnimationCurve = Curves.easeInOutCubic,
     this.reloadTrigger,
     this.loadingChild,
   });
@@ -45,6 +54,33 @@ class OnboardingGate extends StatefulWidget {
 
   /// Tooltip used by the back button.
   final String backButtonTooltip;
+
+  /// Accessibility label used by the top progress bar.
+  final String progressSemanticsLabel;
+
+  /// Whether the back button should be visible when not on the first page.
+  final bool showBackButton;
+
+  /// Duration of the progress fill animation.
+  final Duration progressAnimationDuration;
+
+  /// Duration of onboarding page content transitions.
+  final Duration contentAnimationDuration;
+
+  /// Duration of the primary button label transition.
+  final Duration buttonLabelAnimationDuration;
+
+  /// Curve used for onboarding page content transitions.
+  final Curve contentAnimationCurve;
+
+  /// Transition style used when switching between pages.
+  final OnboardingPageTransitionType pageTransitionType;
+
+  /// Duration of the full-screen close animation on completion.
+  final Duration closeAnimationDuration;
+
+  /// Curve used by the close animation on completion.
+  final Curve closeAnimationCurve;
 
   /// Optional external trigger used to force a new first-launch check.
   ///
@@ -122,6 +158,15 @@ class _OnboardingGateState extends State<OnboardingGate> {
       nextButtonLabel: widget.nextButtonLabel,
       doneButtonLabel: widget.doneButtonLabel,
       backButtonTooltip: widget.backButtonTooltip,
+      progressSemanticsLabel: widget.progressSemanticsLabel,
+      showBackButton: widget.showBackButton,
+      progressAnimationDuration: widget.progressAnimationDuration,
+      contentAnimationDuration: widget.contentAnimationDuration,
+      buttonLabelAnimationDuration: widget.buttonLabelAnimationDuration,
+      contentAnimationCurve: widget.contentAnimationCurve,
+      pageTransitionType: widget.pageTransitionType,
+      closeAnimationDuration: widget.closeAnimationDuration,
+      closeAnimationCurve: widget.closeAnimationCurve,
       onComplete: _handleComplete,
     );
   }

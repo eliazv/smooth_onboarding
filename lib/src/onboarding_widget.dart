@@ -7,6 +7,18 @@ import 'onboarding_page.dart';
 import 'onboarding_storage.dart';
 import 'onboarding_theme.dart';
 
+/// Transition styles available for onboarding page changes.
+enum OnboardingPageTransitionType {
+  /// New page enters from the side, previous page exits to the opposite side.
+  slideHorizontal,
+
+  /// Shared-axis transition with fade, scale and directional motion.
+  sharedAxis,
+
+  /// Cross-fade transition between pages.
+  fade,
+}
+
 /// Main onboarding widget with animated progress, navigation and persistence.
 class SmoothOnboarding extends StatefulWidget {
   /// Creates the onboarding experience.
@@ -17,9 +29,18 @@ class SmoothOnboarding extends StatefulWidget {
     this.theme,
     this.storageKey = OnboardingStorage.defaultStorageKey,
     this.persistCompletion = true,
-    this.nextButtonLabel = 'Avanti',
-    this.doneButtonLabel = 'Inizia',
-    this.backButtonTooltip = 'Indietro',
+    this.nextButtonLabel = 'Next',
+    this.doneButtonLabel = 'Get started',
+    this.backButtonTooltip = 'Back',
+    this.progressSemanticsLabel = 'Onboarding progress',
+    this.showBackButton = true,
+    this.progressAnimationDuration = const Duration(milliseconds: 320),
+    this.contentAnimationDuration = const Duration(milliseconds: 280),
+    this.contentAnimationCurve = Curves.easeOutCubic,
+    this.buttonLabelAnimationDuration = const Duration(milliseconds: 220),
+    this.pageTransitionType = OnboardingPageTransitionType.sharedAxis,
+    this.closeAnimationDuration = const Duration(milliseconds: 420),
+    this.closeAnimationCurve = Curves.easeInOutCubic,
     this.onComplete,
   }) : assert(pages.length > 0, 'At least one onboarding page is required.');
 
@@ -47,6 +68,33 @@ class SmoothOnboarding extends StatefulWidget {
   /// Tooltip used by the back button.
   final String backButtonTooltip;
 
+  /// Accessibility label used by the top progress bar.
+  final String progressSemanticsLabel;
+
+  /// Whether the back button should be visible when not on the first page.
+  final bool showBackButton;
+
+  /// Duration of the progress fill animation.
+  final Duration progressAnimationDuration;
+
+  /// Duration of onboarding page content transitions.
+  final Duration contentAnimationDuration;
+
+  /// Curve used for onboarding page content transitions.
+  final Curve contentAnimationCurve;
+
+  /// Duration of the primary button label transition.
+  final Duration buttonLabelAnimationDuration;
+
+  /// Transition style used when switching between pages.
+  final OnboardingPageTransitionType pageTransitionType;
+
+  /// Duration of the full-screen close animation on completion.
+  final Duration closeAnimationDuration;
+
+  /// Curve used by the close animation on completion.
+  final Curve closeAnimationCurve;
+
   /// Called after the user reaches the last page and completes onboarding.
   final FutureOr<void> Function()? onComplete;
 
@@ -58,6 +106,9 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
   late OnboardingController _controller;
   bool _ownsController = false;
   bool _isCompleting = false;
+  bool _isClosing = false;
+  int _lastPageIndex = 0;
+  int _navigationDirection = 1;
 
   @override
   void initState() {
@@ -102,10 +153,16 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
     _ownsController = widget.controller == null;
     _controller = controller;
     _controller.attach(widget.pages.length);
+    _lastPageIndex = _controller.currentPage;
+    _navigationDirection = 1;
     _controller.addListener(_onControllerChanged);
   }
 
   void _onControllerChanged() {
+    final int nextPage = _controller.currentPage;
+    _navigationDirection = nextPage >= _lastPageIndex ? 1 : -1;
+    _lastPageIndex = nextPage;
+
     if (mounted) {
       setState(() {});
     }
@@ -118,9 +175,12 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
 
     setState(() {
       _isCompleting = true;
+      _isClosing = true;
     });
 
     try {
+      await Future<void>.delayed(widget.closeAnimationDuration);
+
       if (widget.persistCompletion) {
         await OnboardingStorage.markCompleted(storageKey: widget.storageKey);
       }
@@ -136,6 +196,7 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
       if (mounted) {
         setState(() {
           _isCompleting = false;
+          _isClosing = false;
         });
       }
     }
@@ -168,149 +229,251 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
             (_controller.isLastPage
                 ? widget.doneButtonLabel
                 : widget.nextButtonLabel);
+        final bool canGoBack =
+            widget.showBackButton && !_controller.isFirstPage;
 
-        return Material(
-          color: resolvedTheme.backgroundColor,
-          child: SafeArea(
-            child: Padding(
-              padding: resolvedTheme.pagePadding,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      AnimatedSize(
-                        duration: const Duration(milliseconds: 220),
-                        curve: Curves.easeOutCubic,
-                        child: SizedBox(
-                          width: _controller.isFirstPage ? 0 : 40,
-                          child: _controller.isFirstPage
-                              ? const SizedBox.shrink()
-                              : IconButton(
-                                  onPressed: _handleBack,
-                                  splashRadius: 18,
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints.tightFor(
-                                      width: 40, height: 40),
-                                  icon: Icon(
-                                    Icons.arrow_back_rounded,
-                                    size: 20,
-                                    color: resolvedTheme.progressColor,
-                                  ),
-                                  tooltip: widget.backButtonTooltip,
-                                ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Semantics(
-                          label: 'Avanzamento onboarding',
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(999),
-                            child: Container(
-                              height: resolvedTheme.progressHeight,
-                              color: resolvedTheme.progressTrackColor,
-                              child: TweenAnimationBuilder<double>(
-                                tween: Tween<double>(
-                                    begin: 0, end: _controller.progress),
-                                duration: const Duration(milliseconds: 320),
-                                curve: Curves.easeOutCubic,
-                                builder: (BuildContext context, double value,
-                                    Widget? child) {
-                                  return Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: FractionallySizedBox(
-                                      widthFactor: value.clamp(0.0, 1.0),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: resolvedTheme.progressColor,
-                                          borderRadius:
-                                              BorderRadius.circular(999),
+        return AnimatedOpacity(
+          duration: widget.closeAnimationDuration,
+          curve: widget.closeAnimationCurve,
+          opacity: _isClosing ? 0 : 1,
+          child: AnimatedScale(
+            duration: widget.closeAnimationDuration,
+            curve: widget.closeAnimationCurve,
+            scale: _isClosing ? 0.985 : 1,
+            child: AnimatedSlide(
+              duration: widget.closeAnimationDuration,
+              curve: widget.closeAnimationCurve,
+              offset: _isClosing ? const Offset(0, -0.14) : Offset.zero,
+              child: Material(
+                color: resolvedTheme.backgroundColor,
+                child: SafeArea(
+                  child: Padding(
+                    padding: resolvedTheme.pagePadding,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 180),
+                              curve: Curves.easeOutCubic,
+                              child: SizedBox(
+                                width: canGoBack ? 32 : 0,
+                                height: 32,
+                                child: canGoBack
+                                    ? IconButton(
+                                        onPressed: _handleBack,
+                                        splashRadius: 16,
+                                        padding: EdgeInsets.zero,
+                                        visualDensity: VisualDensity.compact,
+                                        constraints:
+                                            const BoxConstraints.tightFor(
+                                          width: 32,
+                                          height: 32,
                                         ),
-                                      ),
-                                    ),
-                                  );
-                                },
+                                        iconSize: 18,
+                                        icon: Icon(
+                                          Icons.arrow_back_rounded,
+                                          color: resolvedTheme.progressColor,
+                                        ),
+                                        tooltip: widget.backButtonTooltip,
+                                      )
+                                    : const SizedBox.shrink(),
                               ),
                             ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 280),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      transitionBuilder:
-                          (Widget child, Animation<double> animation) {
-                        final Animation<Offset> slide = Tween<Offset>(
-                          begin: const Offset(0.03, 0.02),
-                          end: Offset.zero,
-                        ).animate(animation);
-
-                        return FadeTransition(
-                          opacity: animation,
-                          child: SlideTransition(position: slide, child: child),
-                        );
-                      },
-                      child: _OnboardingPageView(
-                        key: ValueKey<int>(_controller.currentPage),
-                        page: activePage,
-                        titleStyle: resolvedTheme.titleStyle,
-                        bodyStyle: resolvedTheme.bodyStyle,
-                        titleColor: resolvedTheme.titleColor,
-                        bodyColor: resolvedTheme.bodyColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Align(
-                    alignment: Alignment.center,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                          maxWidth: resolvedTheme.buttonMaxWidth),
-                      child: SizedBox(
-                        height: resolvedTheme.buttonHeight,
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed:
-                              _isCompleting ? null : _handlePrimaryAction,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: resolvedTheme.buttonColor,
-                            foregroundColor: resolvedTheme.buttonTextColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: resolvedTheme.buttonBorderRadius,
+                            Expanded(
+                              child: Semantics(
+                                label: widget.progressSemanticsLabel,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(999),
+                                  child: Container(
+                                    height: resolvedTheme.progressHeight,
+                                    color: resolvedTheme.progressTrackColor,
+                                    child: TweenAnimationBuilder<double>(
+                                      tween: Tween<double>(
+                                          begin: 0, end: _controller.progress),
+                                      duration:
+                                          widget.progressAnimationDuration,
+                                      curve: Curves.easeOutCubic,
+                                      builder: (BuildContext context,
+                                          double value, Widget? child) {
+                                        return Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: FractionallySizedBox(
+                                            widthFactor: value.clamp(0.0, 1.0),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    resolvedTheme.progressColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
-                            elevation: 0,
-                            textStyle: resolvedTheme.buttonStyle,
-                          ),
+                          ],
+                        ),
+                        const SizedBox(height: 28),
+                        Expanded(
                           child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 220),
+                            duration: widget.contentAnimationDuration,
+                            switchInCurve: widget.contentAnimationCurve,
+                            switchOutCurve: widget.contentAnimationCurve,
+                            layoutBuilder: (
+                              Widget? currentChild,
+                              List<Widget> previousChildren,
+                            ) {
+                              return Stack(
+                                fit: StackFit.expand,
+                                children: <Widget>[
+                                  ...previousChildren,
+                                  if (currentChild != null) currentChild,
+                                ],
+                              );
+                            },
                             transitionBuilder:
                                 (Widget child, Animation<double> animation) {
+                              if (widget.pageTransitionType ==
+                                  OnboardingPageTransitionType.fade) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                );
+                              }
+
+                              final bool isIncoming = child.key ==
+                                  ValueKey<int>(_controller.currentPage);
+                              final double direction =
+                                  _navigationDirection.toDouble();
+                              final Animation<double> motionAnimation =
+                                  isIncoming
+                                      ? animation
+                                      : ReverseAnimation(animation);
+                              final Animation<double> curvedMotion =
+                                  CurvedAnimation(
+                                parent: motionAnimation,
+                                curve: widget.contentAnimationCurve,
+                              );
+
+                              if (widget.pageTransitionType ==
+                                  OnboardingPageTransitionType
+                                      .slideHorizontal) {
+                                final Animation<Offset> slide = Tween<Offset>(
+                                  begin: isIncoming
+                                      ? Offset(direction * 0.16, 0)
+                                      : Offset.zero,
+                                  end: isIncoming
+                                      ? Offset.zero
+                                      : Offset(-direction * 0.16, 0),
+                                ).animate(curvedMotion);
+
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: slide,
+                                    child: child,
+                                  ),
+                                );
+                              }
+
                               final Animation<Offset> slide = Tween<Offset>(
-                                begin: const Offset(0, 0.18),
-                                end: Offset.zero,
-                              ).animate(animation);
+                                begin: isIncoming
+                                    ? Offset(direction * 0.08, 0)
+                                    : Offset.zero,
+                                end: isIncoming
+                                    ? Offset.zero
+                                    : Offset(-direction * 0.08, 0),
+                              ).animate(curvedMotion);
+
+                              final Animation<double> scale = Tween<double>(
+                                begin: isIncoming ? 0.985 : 1,
+                                end: isIncoming ? 1 : 0.985,
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: motionAnimation,
+                                  curve: Curves.easeOutCubic,
+                                ),
+                              );
 
                               return FadeTransition(
                                 opacity: animation,
                                 child: SlideTransition(
-                                    position: slide, child: child),
+                                  position: slide,
+                                  child: ScaleTransition(
+                                    scale: scale,
+                                    child: child,
+                                  ),
+                                ),
                               );
                             },
-                            child: Text(
-                              actionLabel,
-                              key: ValueKey<String>(actionLabel),
+                            child: _OnboardingPageView(
+                              key: ValueKey<int>(_controller.currentPage),
+                              page: activePage,
+                              titleStyle: resolvedTheme.titleStyle,
+                              bodyStyle: resolvedTheme.bodyStyle,
+                              titleColor: resolvedTheme.titleColor,
+                              bodyColor: resolvedTheme.bodyColor,
                             ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 24),
+                        Align(
+                          alignment: Alignment.center,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                                maxWidth: resolvedTheme.buttonMaxWidth),
+                            child: SizedBox(
+                              height: resolvedTheme.buttonHeight,
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed:
+                                    _isCompleting ? null : _handlePrimaryAction,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: resolvedTheme.buttonColor,
+                                  foregroundColor:
+                                      resolvedTheme.buttonTextColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        resolvedTheme.buttonBorderRadius,
+                                  ),
+                                  elevation: 0,
+                                  textStyle: resolvedTheme.buttonStyle,
+                                ),
+                                child: AnimatedSwitcher(
+                                  duration: widget.buttonLabelAnimationDuration,
+                                  transitionBuilder: (Widget child,
+                                      Animation<double> animation) {
+                                    final Animation<Offset> slide =
+                                        Tween<Offset>(
+                                      begin: const Offset(0, 0.18),
+                                      end: Offset.zero,
+                                    ).animate(animation);
+
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: SlideTransition(
+                                          position: slide, child: child),
+                                    );
+                                  },
+                                  child: Text(
+                                    actionLabel,
+                                    key: ValueKey<String>(actionLabel),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),

@@ -3,10 +3,11 @@ build/
 .idea/
 .metadata
 pubspec.lock
-
-partenza.md
+.local/
+onboarding-preview.png
 
 # Exclude generated example platform folders from package archive.
+
 example/android/
 example/ios/
 example/linux/
@@ -20,4 +21,5 @@ example/.metadata
 example/pubspec.lock
 
 # Keep package archive small and focused.
+
 example/smooth_onboarding_example.iml
