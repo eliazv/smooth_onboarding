@@ -16,7 +16,7 @@ class OnboardingTheme {
     this.bodyStyle,
     this.buttonStyle,
     this.pagePadding = const EdgeInsets.fromLTRB(24, 20, 24, 28),
-    this.progressHeight = 6,
+    this.progressHeight = 8,
     this.buttonHeight = 56,
     this.buttonMaxWidth = 420,
     this.buttonBorderRadius = const BorderRadius.all(Radius.circular(18)),

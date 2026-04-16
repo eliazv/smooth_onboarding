@@ -1,0 +1,23 @@
+build/
+.dart_tool/
+.idea/
+.metadata
+pubspec.lock
+
+partenza.md
+
+# Exclude generated example platform folders from package archive.
+example/android/
+example/ios/
+example/linux/
+example/macos/
+example/web/
+example/windows/
+example/build/
+example/.dart_tool/
+example/.idea/
+example/.metadata
+example/pubspec.lock
+
+# Keep package archive small and focused.
+example/smooth_onboarding_example.iml

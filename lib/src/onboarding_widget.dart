@@ -17,6 +17,9 @@ class SmoothOnboarding extends StatefulWidget {
     this.theme,
     this.storageKey = OnboardingStorage.defaultStorageKey,
     this.persistCompletion = true,
+    this.nextButtonLabel = 'Avanti',
+    this.doneButtonLabel = 'Inizia',
+    this.backButtonTooltip = 'Indietro',
     this.onComplete,
   }) : assert(pages.length > 0, 'At least one onboarding page is required.');
 
@@ -34,6 +37,15 @@ class SmoothOnboarding extends StatefulWidget {
 
   /// Whether the completion flag should be persisted automatically.
   final bool persistCompletion;
+
+  /// Default label used for intermediate pages.
+  final String nextButtonLabel;
+
+  /// Default label used for the last page.
+  final String doneButtonLabel;
+
+  /// Tooltip used by the back button.
+  final String backButtonTooltip;
 
   /// Called after the user reaches the last page and completes onboarding.
   final FutureOr<void> Function()? onComplete;
@@ -153,7 +165,9 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
       builder: (BuildContext context, Widget? child) {
         final OnboardingPage activePage = widget.pages[_controller.currentPage];
         final String actionLabel = activePage.buttonLabel ??
-            (_controller.isLastPage ? 'Inizia' : 'Avanti');
+            (_controller.isLastPage
+                ? widget.doneButtonLabel
+                : widget.nextButtonLabel);
 
         return Material(
           color: resolvedTheme.backgroundColor,
@@ -183,7 +197,7 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
                                     size: 20,
                                     color: resolvedTheme.progressColor,
                                   ),
-                                  tooltip: 'Indietro',
+                                  tooltip: widget.backButtonTooltip,
                                 ),
                         ),
                       ),
@@ -207,7 +221,12 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
                                     child: FractionallySizedBox(
                                       widthFactor: value.clamp(0.0, 1.0),
                                       child: Container(
-                                          color: resolvedTheme.progressColor),
+                                        decoration: BoxDecoration(
+                                          color: resolvedTheme.progressColor,
+                                          borderRadius:
+                                              BorderRadius.circular(999),
+                                        ),
+                                      ),
                                     ),
                                   );
                                 },

@@ -38,18 +38,23 @@ class _AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<_AppShell> {
+  int _reloadToken = 0;
+
   Future<void> _resetOnboarding() async {
     await OnboardingStorage.reset();
     if (!mounted) {
       return;
     }
 
-    setState(() {});
+    setState(() {
+      _reloadToken++;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return OnboardingGate(
+      reloadTrigger: _reloadToken,
       storageKey: OnboardingStorage.defaultStorageKey,
       pages: const <OnboardingPage>[
         OnboardingPage(
@@ -74,6 +79,9 @@ class _AppShellState extends State<_AppShell> {
           buttonLabel: 'Inizia',
         ),
       ],
+      nextButtonLabel: 'Avanti',
+      doneButtonLabel: 'Inizia',
+      backButtonTooltip: 'Indietro',
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Demo app'),

@@ -3,3 +3,15 @@
 .metadata
 build/
 pubspec.lock
+
+# Local planning note, not part of package source.
+partenza.md
+
+# Keep repo focused on package + portable example source.
+example/android/
+example/ios/
+example/linux/
+example/macos/
+example/web/
+example/windows/
+example/smooth_onboarding_example.iml

@@ -12,9 +12,19 @@ and an API that stays easy to integrate in real apps.
 - First-launch persistence via `SharedPreferences`.
 - Dark mode aware default styling.
 - Fully customizable page content with any widget.
-- Small, reusable API surface for app integration or wrapper gating.
+- Customizable labels (`next`, `done`, `back` tooltip).
+- External reload trigger for programmatic onboarding reset.
 
 ## Installation
+
+### From pub.dev (recommended after publish)
+
+```yaml
+dependencies:
+  smooth_onboarding: ^0.1.0
+```
+
+### Local path dependency (current repository)
 
 ```yaml
 dependencies:
@@ -72,6 +82,37 @@ if (showOnboarding) {
 }
 ```
 
+## Customization
+
+You can customize texts, colors and layout through page data, labels and theme:
+
+```dart
+OnboardingGate(
+  pages: pages,
+  nextButtonLabel: 'Next',
+  doneButtonLabel: 'Start',
+  backButtonTooltip: 'Back',
+  theme: const OnboardingTheme(
+    backgroundColor: Colors.white,
+    progressColor: Colors.blue,
+    buttonColor: Colors.blue,
+    progressHeight: 8,
+  ),
+  child: const HomePage(),
+)
+```
+
+Reset + force gate re-check:
+
+```dart
+await OnboardingStorage.reset();
+setState(() {
+  reloadToken++;
+});
+```
+
+Then pass `reloadTrigger: reloadToken` to `OnboardingGate`.
+
 ## Example behavior
 
 The package is designed around these defaults:
@@ -83,9 +124,50 @@ The package is designed around these defaults:
 - Small back arrow on the progress row, hidden on the first page.
 - Animated transitions when page content changes.
 
+## Verify locally
+
+Run these commands from the package root:
+
+```bash
+flutter pub get
+flutter analyze
+flutter test
+dart pub publish --dry-run
+```
+
+## View it graphically
+
+To run the demo app and inspect the onboarding flow visually:
+
+```bash
+cd example
+flutter create .
+flutter run -d windows
+```
+
+If you want to test dark mode quickly, switch your system theme to dark and
+restart the app. The onboarding background will switch to dark gray.
+
+## Publish to pub.dev
+
+1. Verify links in `pubspec.yaml` (`homepage`, `repository`, `issue_tracker`).
+2. Add at least one screenshot or GIF in this README (recommended for pub points).
+3. Ensure a clean git state (`git status` should be clean).
+4. Run a final check:
+
+```bash
+dart pub publish --dry-run
+```
+
+5. Publish:
+
+```bash
+dart pub publish
+```
+
 ## Publishing checklist
 
-- Add a real GitHub repository URL before publishing.
+- Verify repository URLs in `pubspec.yaml`.
 - Add a GIF or screenshot in the README for pub.dev score.
 - Run `dart format .` and `flutter analyze` before publishing.
 - Verify with `dart pub publish --dry-run`.

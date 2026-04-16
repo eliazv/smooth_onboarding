@@ -1,9 +1,15 @@
 name: smooth_onboarding
 description: A reusable, animated Flutter onboarding package with first-launch persistence and dark mode support.
 version: 0.1.0
-homepage: https://github.com/your-username/smooth_onboarding
-repository: https://github.com/your-username/smooth_onboarding
-issue_tracker: https://github.com/your-username/smooth_onboarding/issues
+homepage: https://github.com/eliazv/smooth_onboarding
+repository: https://github.com/eliazv/smooth_onboarding
+issue_tracker: https://github.com/eliazv/smooth_onboarding/issues
+topics:
+  - onboarding
+  - flutter
+  - ui
+  - animation
+  - first-launch
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

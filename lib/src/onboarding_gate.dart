@@ -15,6 +15,10 @@ class OnboardingGate extends StatefulWidget {
     this.theme,
     this.storageKey = OnboardingStorage.defaultStorageKey,
     this.persistCompletion = true,
+    this.nextButtonLabel = 'Avanti',
+    this.doneButtonLabel = 'Inizia',
+    this.backButtonTooltip = 'Indietro',
+    this.reloadTrigger,
     this.loadingChild,
   });
 
@@ -33,6 +37,20 @@ class OnboardingGate extends StatefulWidget {
   /// Whether the completion flag should be persisted automatically.
   final bool persistCompletion;
 
+  /// Default label used for intermediate pages.
+  final String nextButtonLabel;
+
+  /// Default label used for the last page.
+  final String doneButtonLabel;
+
+  /// Tooltip used by the back button.
+  final String backButtonTooltip;
+
+  /// Optional external trigger used to force a new first-launch check.
+  ///
+  /// Change this value when you reset onboarding from outside the gate.
+  final Object? reloadTrigger;
+
   /// Optional placeholder while the first-launch check is running.
   final Widget? loadingChild;
 
@@ -48,6 +66,19 @@ class _OnboardingGateState extends State<OnboardingGate> {
   void initState() {
     super.initState();
     _loadGateState();
+  }
+
+  @override
+  void didUpdateWidget(covariant OnboardingGate oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.storageKey != widget.storageKey ||
+        oldWidget.reloadTrigger != widget.reloadTrigger) {
+      setState(() {
+        _isLoading = true;
+      });
+      _loadGateState();
+    }
   }
 
   Future<void> _loadGateState() async {
@@ -88,6 +119,9 @@ class _OnboardingGateState extends State<OnboardingGate> {
       theme: widget.theme,
       storageKey: widget.storageKey,
       persistCompletion: widget.persistCompletion,
+      nextButtonLabel: widget.nextButtonLabel,
+      doneButtonLabel: widget.doneButtonLabel,
+      backButtonTooltip: widget.backButtonTooltip,
       onComplete: _handleComplete,
     );
   }

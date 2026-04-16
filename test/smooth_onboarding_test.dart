@@ -75,4 +75,77 @@ void main() {
     expect(find.text('Inizia'), findsOneWidget);
     expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
   });
+
+  testWidgets('custom labels are applied', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SmoothOnboarding(
+          nextButtonLabel: 'Next',
+          doneButtonLabel: 'Start',
+          backButtonTooltip: 'Back',
+          pages: <OnboardingPage>[
+            OnboardingPage(
+              title: 'First',
+              body: Text('Page one'),
+            ),
+            OnboardingPage(
+              title: 'Second',
+              body: Text('Page two'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    expect(find.text('Next'), findsOneWidget);
+
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Start'), findsOneWidget);
+    expect(find.byTooltip('Back'), findsOneWidget);
+  });
+
+  testWidgets(
+      'onboarding gate re-checks first launch when reloadTrigger changes',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'gate_demo': true,
+    });
+
+    int reloadToken = 0;
+    late void Function() triggerReload;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            triggerReload = () {
+              setState(() {
+                reloadToken++;
+              });
+            };
+
+            return OnboardingGate(
+              storageKey: 'gate_demo',
+              reloadTrigger: reloadToken,
+              pages: const <OnboardingPage>[
+                OnboardingPage(title: 'Welcome', body: Text('Onboarding body')),
+              ],
+              child: const Text('HOME'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    expect(find.text('HOME'), findsOneWidget);
+
+    await OnboardingStorage.reset(storageKey: 'gate_demo');
+    triggerReload();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Inizia'), findsOneWidget);
+  });
 }
