@@ -4,7 +4,7 @@
 It focuses on a clean first-run experience, shared-axis page motion, dark mode adaptation,
 and an API that stays easy to integrate in real apps.
 
-![Onboarding Preview](assets/readme/video_example.gif)
+![Onboarding Preview](https://raw.githubusercontent.com/eliazv/smooth_onboarding/master/assets/readme/video_example.gif)
 
 ## Preview
 
@@ -29,7 +29,7 @@ See it in action: the example app uses built-in shapes and icons to stay lightwe
 
 ```yaml
 dependencies:
-  smooth_onboarding: ^0.1.0
+  smooth_onboarding: ^0.2.2
 ```
 
 ## Usage

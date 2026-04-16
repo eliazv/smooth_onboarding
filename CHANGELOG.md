@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2
+
+- Fixed preview GIF visibility on pub.dev by using absolute raw GitHub URLs.
+- Updated documentation installation snippets to reflect current version.
+
+
 ## 0.2.1
 
 - Improved documentation visibility by adding a preview GIF at the top of the `README.md`.
