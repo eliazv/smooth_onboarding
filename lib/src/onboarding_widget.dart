@@ -102,16 +102,9 @@ class SmoothOnboarding extends StatefulWidget {
   State<SmoothOnboarding> createState() => _SmoothOnboardingState();
 }
 
-class _SmoothOnboardingState extends State<SmoothOnboarding>
-    with TickerProviderStateMixin {
+class _SmoothOnboardingState extends State<SmoothOnboarding> {
   late OnboardingController _controller;
-  late AnimationController _slideController;
-
-  // Tracks which page is actually rendered during slideHorizontal.
-  int _displayedPage = 0;
-  double _slideStart = 0;
-  double _slideEnd = 0;
-  bool _slideExiting = false;
+  late PageController _pageController;
 
   bool _ownsController = false;
   bool _isCompleting = false;
@@ -122,10 +115,7 @@ class _SmoothOnboardingState extends State<SmoothOnboarding>
   @override
   void initState() {
     super.initState();
-    _slideController = AnimationController(
-      vsync: this,
-      duration: widget.contentAnimationDuration,
-    );
+    _pageController = PageController();
     _initializeController();
   }
 
@@ -152,7 +142,7 @@ class _SmoothOnboardingState extends State<SmoothOnboarding>
 
   @override
   void dispose() {
-    _slideController.dispose();
+    _pageController.dispose();
     _controller.removeListener(_onControllerChanged);
     if (_ownsController) {
       _controller.dispose();
@@ -168,7 +158,6 @@ class _SmoothOnboardingState extends State<SmoothOnboarding>
     _controller = controller;
     _controller.attach(widget.pages.length);
     _lastPageIndex = _controller.currentPage;
-    _displayedPage = _controller.currentPage;
     _navigationDirection = 1;
     _controller.addListener(_onControllerChanged);
   }
@@ -181,43 +170,16 @@ class _SmoothOnboardingState extends State<SmoothOnboarding>
     if (!mounted) return;
 
     if (widget.pageTransitionType ==
-        OnboardingPageTransitionType.slideHorizontal) {
-      unawaited(_runSlide(nextPage, _navigationDirection));
-    } else {
-      setState(() {});
+            OnboardingPageTransitionType.slideHorizontal &&
+        _pageController.hasClients) {
+      _pageController.animateToPage(
+        nextPage,
+        duration: widget.contentAnimationDuration,
+        curve: widget.contentAnimationCurve,
+      );
     }
-  }
 
-  // Single widget, two-phase slide. No two pages ever in the tree at once.
-  Future<void> _runSlide(int targetPage, int direction) async {
-    _slideController.stop();
-
-    final int halfMs =
-        widget.contentAnimationDuration.inMilliseconds ~/ 2;
-
-    // Phase 1: current page exits to left.
-    _slideExiting = true;
-    _slideStart = 0;
-    _slideEnd = -direction.toDouble();
-    _slideController.duration = Duration(milliseconds: halfMs);
-    _slideController.value = 0;
-    if (mounted) setState(() {});
-    await _slideController.forward();
-
-    if (!mounted) return;
-
-    // Swap: place new page offscreen on the opposite side.
-    _displayedPage = targetPage;
-    _slideExiting = false;
-    _slideStart = direction.toDouble();
-    _slideEnd = 0;
-    _slideController.duration = Duration(milliseconds: halfMs);
-    _slideController.value = 0;
     setState(() {});
-
-    // Phase 2: new page enters from right.
-    await _slideController.forward();
-    if (mounted) setState(() {});
   }
 
   Future<void> _complete() async {
@@ -367,32 +329,22 @@ class _SmoothOnboardingState extends State<SmoothOnboarding>
                         Expanded(
                           child: widget.pageTransitionType ==
                                   OnboardingPageTransitionType.slideHorizontal
-                              ? ClipRect(
-                                  child: AnimatedBuilder(
-                                    animation: _slideController,
-                                    builder:
-                                        (BuildContext context, Widget? _) {
-                                      final double t = _slideController.value;
-                                      final double curved = _slideExiting
-                                          ? Curves.easeInCubic.transform(t)
-                                          : Curves.easeOutCubic.transform(t);
-                                      final double offset = _slideStart +
-                                          (_slideEnd - _slideStart) * curved;
-                                      return FractionalTranslation(
-                                        translation: Offset(offset, 0),
-                                        child: _OnboardingPageView(
-                                          page:
-                                              widget.pages[_displayedPage],
-                                          titleStyle:
-                                              resolvedTheme.titleStyle,
+                              ? PageView(
+                                  controller: _pageController,
+                                  physics:
+                                      const NeverScrollableScrollPhysics(),
+                                  children: widget.pages
+                                      .map(
+                                        (OnboardingPage p) =>
+                                            _OnboardingPageView(
+                                          page: p,
+                                          titleStyle: resolvedTheme.titleStyle,
                                           bodyStyle: resolvedTheme.bodyStyle,
-                                          titleColor:
-                                              resolvedTheme.titleColor,
+                                          titleColor: resolvedTheme.titleColor,
                                           bodyColor: resolvedTheme.bodyColor,
                                         ),
-                                      );
-                                    },
-                                  ),
+                                      )
+                                      .toList(),
                                 )
                               : AnimatedSwitcher(
                                   duration: widget.contentAnimationDuration,
