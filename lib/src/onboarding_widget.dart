@@ -38,9 +38,9 @@ class SmoothOnboarding extends StatefulWidget {
     this.contentAnimationDuration = const Duration(milliseconds: 280),
     this.contentAnimationCurve = Curves.easeOutCubic,
     this.buttonLabelAnimationDuration = const Duration(milliseconds: 220),
-    this.pageTransitionType = OnboardingPageTransitionType.sharedAxis,
-    this.closeAnimationDuration = const Duration(milliseconds: 420),
-    this.closeAnimationCurve = Curves.easeInOutCubic,
+    this.pageTransitionType = OnboardingPageTransitionType.slideHorizontal,
+    this.closeAnimationDuration = const Duration(milliseconds: 480),
+    this.closeAnimationCurve = Curves.easeInCubic,
     this.onComplete,
   }) : assert(pages.length > 0, 'At least one onboarding page is required.');
 
@@ -102,8 +102,17 @@ class SmoothOnboarding extends StatefulWidget {
   State<SmoothOnboarding> createState() => _SmoothOnboardingState();
 }
 
-class _SmoothOnboardingState extends State<SmoothOnboarding> {
+class _SmoothOnboardingState extends State<SmoothOnboarding>
+    with TickerProviderStateMixin {
   late OnboardingController _controller;
+  late AnimationController _slideController;
+
+  // Tracks which page is actually rendered during slideHorizontal.
+  int _displayedPage = 0;
+  double _slideStart = 0;
+  double _slideEnd = 0;
+  bool _slideExiting = false;
+
   bool _ownsController = false;
   bool _isCompleting = false;
   bool _isClosing = false;
@@ -113,6 +122,10 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
   @override
   void initState() {
     super.initState();
+    _slideController = AnimationController(
+      vsync: this,
+      duration: widget.contentAnimationDuration,
+    );
     _initializeController();
   }
 
@@ -139,6 +152,7 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
 
   @override
   void dispose() {
+    _slideController.dispose();
     _controller.removeListener(_onControllerChanged);
     if (_ownsController) {
       _controller.dispose();
@@ -154,6 +168,7 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
     _controller = controller;
     _controller.attach(widget.pages.length);
     _lastPageIndex = _controller.currentPage;
+    _displayedPage = _controller.currentPage;
     _navigationDirection = 1;
     _controller.addListener(_onControllerChanged);
   }
@@ -163,9 +178,46 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
     _navigationDirection = nextPage >= _lastPageIndex ? 1 : -1;
     _lastPageIndex = nextPage;
 
-    if (mounted) {
+    if (!mounted) return;
+
+    if (widget.pageTransitionType ==
+        OnboardingPageTransitionType.slideHorizontal) {
+      unawaited(_runSlide(nextPage, _navigationDirection));
+    } else {
       setState(() {});
     }
+  }
+
+  // Single widget, two-phase slide. No two pages ever in the tree at once.
+  Future<void> _runSlide(int targetPage, int direction) async {
+    _slideController.stop();
+
+    final int halfMs =
+        widget.contentAnimationDuration.inMilliseconds ~/ 2;
+
+    // Phase 1: current page exits to left.
+    _slideExiting = true;
+    _slideStart = 0;
+    _slideEnd = -direction.toDouble();
+    _slideController.duration = Duration(milliseconds: halfMs);
+    _slideController.value = 0;
+    if (mounted) setState(() {});
+    await _slideController.forward();
+
+    if (!mounted) return;
+
+    // Swap: place new page offscreen on the opposite side.
+    _displayedPage = targetPage;
+    _slideExiting = false;
+    _slideStart = direction.toDouble();
+    _slideEnd = 0;
+    _slideController.duration = Duration(milliseconds: halfMs);
+    _slideController.value = 0;
+    setState(() {});
+
+    // Phase 2: new page enters from right.
+    await _slideController.forward();
+    if (mounted) setState(() {});
   }
 
   Future<void> _complete() async {
@@ -232,20 +284,12 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
         final bool canGoBack =
             widget.showBackButton && !_controller.isFirstPage;
 
-        return AnimatedOpacity(
+        return AnimatedSlide(
           duration: widget.closeAnimationDuration,
           curve: widget.closeAnimationCurve,
-          opacity: _isClosing ? 0 : 1,
-          child: AnimatedScale(
-            duration: widget.closeAnimationDuration,
-            curve: widget.closeAnimationCurve,
-            scale: _isClosing ? 0.985 : 1,
-            child: AnimatedSlide(
-              duration: widget.closeAnimationDuration,
-              curve: widget.closeAnimationCurve,
-              offset: _isClosing ? const Offset(0, -0.14) : Offset.zero,
-              child: Material(
-                color: resolvedTheme.backgroundColor,
+          offset: _isClosing ? const Offset(0, 1) : Offset.zero,
+          child: Material(
+              color: resolvedTheme.backgroundColor,
                 child: SafeArea(
                   child: Padding(
                     padding: resolvedTheme.pagePadding,
@@ -321,106 +365,117 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
                         ),
                         const SizedBox(height: 28),
                         Expanded(
-                          child: AnimatedSwitcher(
-                            duration: widget.contentAnimationDuration,
-                            switchInCurve: widget.contentAnimationCurve,
-                            switchOutCurve: widget.contentAnimationCurve,
-                            layoutBuilder: (
-                              Widget? currentChild,
-                              List<Widget> previousChildren,
-                            ) {
-                              return Stack(
-                                fit: StackFit.expand,
-                                children: <Widget>[
-                                  ...previousChildren,
-                                  if (currentChild != null) currentChild,
-                                ],
-                              );
-                            },
-                            transitionBuilder:
-                                (Widget child, Animation<double> animation) {
-                              if (widget.pageTransitionType ==
-                                  OnboardingPageTransitionType.fade) {
-                                return FadeTransition(
-                                  opacity: animation,
-                                  child: child,
-                                );
-                              }
-
-                              final bool isIncoming = child.key ==
-                                  ValueKey<int>(_controller.currentPage);
-                              final double direction =
-                                  _navigationDirection.toDouble();
-                              final Animation<double> motionAnimation =
-                                  isIncoming
-                                      ? animation
-                                      : ReverseAnimation(animation);
-                              final Animation<double> curvedMotion =
-                                  CurvedAnimation(
-                                parent: motionAnimation,
-                                curve: widget.contentAnimationCurve,
-                              );
-
-                              if (widget.pageTransitionType ==
-                                  OnboardingPageTransitionType
-                                      .slideHorizontal) {
-                                final Animation<Offset> slide = Tween<Offset>(
-                                  begin: isIncoming
-                                      ? Offset(direction * 0.16, 0)
-                                      : Offset.zero,
-                                  end: isIncoming
-                                      ? Offset.zero
-                                      : Offset(-direction * 0.16, 0),
-                                ).animate(curvedMotion);
-
-                                return FadeTransition(
-                                  opacity: animation,
-                                  child: SlideTransition(
-                                    position: slide,
-                                    child: child,
+                          child: widget.pageTransitionType ==
+                                  OnboardingPageTransitionType.slideHorizontal
+                              ? ClipRect(
+                                  child: AnimatedBuilder(
+                                    animation: _slideController,
+                                    builder:
+                                        (BuildContext context, Widget? _) {
+                                      final double t = _slideController.value;
+                                      final double curved = _slideExiting
+                                          ? Curves.easeInCubic.transform(t)
+                                          : Curves.easeOutCubic.transform(t);
+                                      final double offset = _slideStart +
+                                          (_slideEnd - _slideStart) * curved;
+                                      return FractionalTranslation(
+                                        translation: Offset(offset, 0),
+                                        child: _OnboardingPageView(
+                                          page:
+                                              widget.pages[_displayedPage],
+                                          titleStyle:
+                                              resolvedTheme.titleStyle,
+                                          bodyStyle: resolvedTheme.bodyStyle,
+                                          titleColor:
+                                              resolvedTheme.titleColor,
+                                          bodyColor: resolvedTheme.bodyColor,
+                                        ),
+                                      );
+                                    },
                                   ),
-                                );
-                              }
+                                )
+                              : AnimatedSwitcher(
+                                  duration: widget.contentAnimationDuration,
+                                  switchInCurve: widget.contentAnimationCurve,
+                                  switchOutCurve:
+                                      widget.contentAnimationCurve,
+                                  layoutBuilder: (
+                                    Widget? currentChild,
+                                    List<Widget> previousChildren,
+                                  ) {
+                                    return Stack(
+                                      fit: StackFit.expand,
+                                      clipBehavior: Clip.hardEdge,
+                                      children: <Widget>[
+                                        ...previousChildren,
+                                        if (currentChild != null) currentChild,
+                                      ],
+                                    );
+                                  },
+                                  transitionBuilder: (Widget child,
+                                      Animation<double> animation) {
+                                    if (widget.pageTransitionType ==
+                                        OnboardingPageTransitionType.fade) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      );
+                                    }
 
-                              final Animation<Offset> slide = Tween<Offset>(
-                                begin: isIncoming
-                                    ? Offset(direction * 0.08, 0)
-                                    : Offset.zero,
-                                end: isIncoming
-                                    ? Offset.zero
-                                    : Offset(-direction * 0.08, 0),
-                              ).animate(curvedMotion);
+                                    final bool isIncoming = child.key ==
+                                        ValueKey<int>(_controller.currentPage);
+                                    final double direction =
+                                        _navigationDirection.toDouble();
+                                    final Animation<double> motionAnimation =
+                                        isIncoming
+                                            ? animation
+                                            : ReverseAnimation(animation);
+                                    final Animation<double> curvedMotion =
+                                        CurvedAnimation(
+                                      parent: motionAnimation,
+                                      curve: widget.contentAnimationCurve,
+                                    );
 
-                              final Animation<double> scale = Tween<double>(
-                                begin: isIncoming ? 0.985 : 1,
-                                end: isIncoming ? 1 : 0.985,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: motionAnimation,
-                                  curve: Curves.easeOutCubic,
-                                ),
-                              );
+                                    final Animation<Offset> slide =
+                                        Tween<Offset>(
+                                      begin: isIncoming
+                                          ? Offset(direction * 0.08, 0)
+                                          : Offset.zero,
+                                      end: isIncoming
+                                          ? Offset.zero
+                                          : Offset(-direction * 0.08, 0),
+                                    ).animate(curvedMotion);
 
-                              return FadeTransition(
-                                opacity: animation,
-                                child: SlideTransition(
-                                  position: slide,
-                                  child: ScaleTransition(
-                                    scale: scale,
-                                    child: child,
+                                    final Animation<double> scale =
+                                        Tween<double>(
+                                      begin: isIncoming ? 0.985 : 1,
+                                      end: isIncoming ? 1 : 0.985,
+                                    ).animate(CurvedAnimation(
+                                      parent: motionAnimation,
+                                      curve: Curves.easeOutCubic,
+                                    ));
+
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: SlideTransition(
+                                        position: slide,
+                                        child: ScaleTransition(
+                                          scale: scale,
+                                          child: child,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: _OnboardingPageView(
+                                    key: ValueKey<int>(
+                                        _controller.currentPage),
+                                    page: activePage,
+                                    titleStyle: resolvedTheme.titleStyle,
+                                    bodyStyle: resolvedTheme.bodyStyle,
+                                    titleColor: resolvedTheme.titleColor,
+                                    bodyColor: resolvedTheme.bodyColor,
                                   ),
                                 ),
-                              );
-                            },
-                            child: _OnboardingPageView(
-                              key: ValueKey<int>(_controller.currentPage),
-                              page: activePage,
-                              titleStyle: resolvedTheme.titleStyle,
-                              bodyStyle: resolvedTheme.bodyStyle,
-                              titleColor: resolvedTheme.titleColor,
-                              bodyColor: resolvedTheme.bodyColor,
-                            ),
-                          ),
                         ),
                         const SizedBox(height: 24),
                         Align(
@@ -475,11 +530,9 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
                   ),
                 ),
               ),
-            ),
-          ),
-        );
-      },
-    );
+            );
+        },
+      );
   }
 }
 

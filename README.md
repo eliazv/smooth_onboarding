@@ -20,13 +20,11 @@ and does not need extra illustration assets.
 - Customizable labels (`next`, `done`, `back` tooltip).
 - Optional back button toggle (`showBackButton`).
 - Configurable animation durations and progress semantics label.
-- Configurable page transition style with shared-axis motion as default.
+- Configurable page transition style: horizontal slide (default), shared-axis, or fade.
 - Modern completion animation that slides the whole screen upward.
 - External reload trigger for programmatic onboarding reset.
 
 ## Installation
-
-### From pub.dev (recommended after publish)
 
 ```yaml
 dependencies:
@@ -97,7 +95,7 @@ OnboardingGate(
   pageTransitionType: OnboardingPageTransitionType.slideHorizontal,
   buttonLabelAnimationDuration: const Duration(milliseconds: 240),
   closeAnimationDuration: const Duration(milliseconds: 420),
-  closeAnimationCurve: Curves.easeInOutCubic,
+  closeAnimationCurve: Curves.easeInCubic,
   theme: const OnboardingTheme(
     backgroundColor: Colors.white,
     progressColor: Colors.blue,
@@ -126,7 +124,7 @@ The package is designed around these defaults:
 - White background in light mode.
 - Dark gray background in dark mode.
 - Blue progress bar and blue primary button.
-- Shared-axis transitions between pages.
+- Horizontal slide transitions between pages (no fade).
 - Full-screen close animation that moves the onboarding upward.
 - Small back arrow with a compact hit area.
 

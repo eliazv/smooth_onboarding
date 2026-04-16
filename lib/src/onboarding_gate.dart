@@ -150,24 +150,29 @@ class _OnboardingGateState extends State<OnboardingGate> {
       return widget.child;
     }
 
-    return SmoothOnboarding(
-      pages: widget.pages,
-      theme: widget.theme,
-      storageKey: widget.storageKey,
-      persistCompletion: widget.persistCompletion,
-      nextButtonLabel: widget.nextButtonLabel,
-      doneButtonLabel: widget.doneButtonLabel,
-      backButtonTooltip: widget.backButtonTooltip,
-      progressSemanticsLabel: widget.progressSemanticsLabel,
-      showBackButton: widget.showBackButton,
-      progressAnimationDuration: widget.progressAnimationDuration,
-      contentAnimationDuration: widget.contentAnimationDuration,
-      buttonLabelAnimationDuration: widget.buttonLabelAnimationDuration,
-      contentAnimationCurve: widget.contentAnimationCurve,
-      pageTransitionType: widget.pageTransitionType,
-      closeAnimationDuration: widget.closeAnimationDuration,
-      closeAnimationCurve: widget.closeAnimationCurve,
-      onComplete: _handleComplete,
+    return Stack(
+      children: <Widget>[
+        Positioned.fill(child: widget.child),
+        SmoothOnboarding(
+          pages: widget.pages,
+          theme: widget.theme,
+          storageKey: widget.storageKey,
+          persistCompletion: widget.persistCompletion,
+          nextButtonLabel: widget.nextButtonLabel,
+          doneButtonLabel: widget.doneButtonLabel,
+          backButtonTooltip: widget.backButtonTooltip,
+          progressSemanticsLabel: widget.progressSemanticsLabel,
+          showBackButton: widget.showBackButton,
+          progressAnimationDuration: widget.progressAnimationDuration,
+          contentAnimationDuration: widget.contentAnimationDuration,
+          buttonLabelAnimationDuration: widget.buttonLabelAnimationDuration,
+          contentAnimationCurve: widget.contentAnimationCurve,
+          pageTransitionType: widget.pageTransitionType,
+          closeAnimationDuration: widget.closeAnimationDuration,
+          closeAnimationCurve: widget.closeAnimationCurve,
+          onComplete: _handleComplete,
+        ),
+      ],
     );
   }
 }
