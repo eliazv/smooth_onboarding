@@ -97,6 +97,8 @@ class OnboardingGate extends StatefulWidget {
 class _OnboardingGateState extends State<OnboardingGate> {
   bool _isLoading = true;
   bool _showOnboarding = false;
+  bool _isClosingAnimation = false;
+  final GlobalKey _onboardingKey = GlobalKey();
 
   @override
   void initState() {
@@ -130,15 +132,40 @@ class _OnboardingGateState extends State<OnboardingGate> {
     });
   }
 
-  Future<void> _handleComplete() async {
-    if (!mounted) {
-      return;
-    }
+  void _handleClosing() {
+    if (!mounted) return;
+    setState(() => _isClosingAnimation = true);
+  }
 
+  Future<void> _handleComplete() async {
+    if (!mounted) return;
     setState(() {
       _showOnboarding = false;
+      _isClosingAnimation = false;
     });
   }
+
+  Widget _buildOnboarding() => SmoothOnboarding(
+        key: _onboardingKey,
+        pages: widget.pages,
+        theme: widget.theme,
+        storageKey: widget.storageKey,
+        persistCompletion: widget.persistCompletion,
+        nextButtonLabel: widget.nextButtonLabel,
+        doneButtonLabel: widget.doneButtonLabel,
+        backButtonTooltip: widget.backButtonTooltip,
+        progressSemanticsLabel: widget.progressSemanticsLabel,
+        showBackButton: widget.showBackButton,
+        progressAnimationDuration: widget.progressAnimationDuration,
+        contentAnimationDuration: widget.contentAnimationDuration,
+        buttonLabelAnimationDuration: widget.buttonLabelAnimationDuration,
+        contentAnimationCurve: widget.contentAnimationCurve,
+        pageTransitionType: widget.pageTransitionType,
+        closeAnimationDuration: widget.closeAnimationDuration,
+        closeAnimationCurve: widget.closeAnimationCurve,
+        onClosing: _handleClosing,
+        onComplete: _handleComplete,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -150,24 +177,16 @@ class _OnboardingGateState extends State<OnboardingGate> {
       return widget.child;
     }
 
-    return SmoothOnboarding(
-      pages: widget.pages,
-      theme: widget.theme,
-      storageKey: widget.storageKey,
-      persistCompletion: widget.persistCompletion,
-      nextButtonLabel: widget.nextButtonLabel,
-      doneButtonLabel: widget.doneButtonLabel,
-      backButtonTooltip: widget.backButtonTooltip,
-      progressSemanticsLabel: widget.progressSemanticsLabel,
-      showBackButton: widget.showBackButton,
-      progressAnimationDuration: widget.progressAnimationDuration,
-      contentAnimationDuration: widget.contentAnimationDuration,
-      buttonLabelAnimationDuration: widget.buttonLabelAnimationDuration,
-      contentAnimationCurve: widget.contentAnimationCurve,
-      pageTransitionType: widget.pageTransitionType,
-      closeAnimationDuration: widget.closeAnimationDuration,
-      closeAnimationCurve: widget.closeAnimationCurve,
-      onComplete: _handleComplete,
-    );
+    // During close animation: show app behind so it's visible as onboarding slides down.
+    if (_isClosingAnimation) {
+      return Stack(
+        children: <Widget>[
+          Positioned.fill(child: widget.child),
+          _buildOnboarding(),
+        ],
+      );
+    }
+
+    return _buildOnboarding();
   }
 }

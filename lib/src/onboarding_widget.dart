@@ -42,6 +42,7 @@ class SmoothOnboarding extends StatefulWidget {
     this.closeAnimationDuration = const Duration(milliseconds: 480),
     this.closeAnimationCurve = Curves.easeInCubic,
     this.onComplete,
+    this.onClosing,
   }) : assert(pages.length > 0, 'At least one onboarding page is required.');
 
   /// The pages shown by the onboarding flow.
@@ -97,6 +98,9 @@ class SmoothOnboarding extends StatefulWidget {
 
   /// Called after the user reaches the last page and completes onboarding.
   final FutureOr<void> Function()? onComplete;
+
+  /// Called when the close animation begins (before [onComplete]).
+  final VoidCallback? onClosing;
 
   @override
   State<SmoothOnboarding> createState() => _SmoothOnboardingState();
@@ -191,6 +195,8 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
       _isCompleting = true;
       _isClosing = true;
     });
+
+    widget.onClosing?.call();
 
     try {
       await Future<void>.delayed(widget.closeAnimationDuration);
