@@ -1,14 +1,32 @@
 # smooth_onboarding
 
-`smooth_onboarding` is a reusable Flutter onboarding package designed for pub.dev.
-It focuses on a clean first-run experience, shared-axis page motion, dark mode adaptation,
-and an API that stays easy to integrate in real apps.
+[![pub package](https://img.shields.io/pub/v/smooth_onboarding.svg)](https://pub.dev/packages/smooth_onboarding)
+[![likes](https://img.shields.io/pub/likes/smooth_onboarding)](https://pub.dev/packages/smooth_onboarding)
+
+A smooth, production-ready onboarding UI for Flutter apps.
+
+✨ Smooth animations • 🎯 Simple API • 📱 Production-ready
+
+Build beautiful onboarding flows in minutes, with smooth animations and zero boilerplate.
+
 
 ![Onboarding Preview](https://raw.githubusercontent.com/eliazv/smooth_onboarding/master/assets/readme/video_example.gif)
 
-## Preview
+## Demo
 
 See it in action: the example app uses built-in shapes and icons to stay lightweight while providing a sleek, smooth onboarding experience.
+
+---
+
+## Why smooth_onboarding?
+
+Most onboarding packages are either too basic or too rigid.
+
+`smooth_onboarding` focuses on:
+- **Clean, modern UI** out of the box
+- **Smooth, production-level animations**
+- **Simple API** that integrates easily in real apps
+
 
 ## Features
 
@@ -129,6 +147,11 @@ The package is designed around these defaults:
 - Full-screen close animation that moves the onboarding upward.
 - Small back arrow with a compact hit area.
 
+## Used in production
+
+This package is used in real Flutter applications.
+
+
 ## Development
 
 For local checks, run the usual Flutter commands from the package root:
@@ -137,6 +160,42 @@ For local checks, run the usual Flutter commands from the package root:
 flutter analyze
 flutter test
 ```
+
+---
+
+## 👨‍💻 Author
+
+Created by Elia Zavatta
+
+I build production-ready Flutter apps and reusable UI components.
+
+👉 Need help integrating this package or building your app?
+Feel free to reach out:
+
+- GitHub: https://github.com/eliazv
+- LinkedIn: https://www.linkedin.com/in/eliazavatta/
+- Email: info@eliazavatta.it
+
+---
+
+## ⭐ Support
+
+If you find this package useful:
+
+- ⭐ Star the repo on GitHub
+- 👍 Like it on pub.dev
+- 🐛 Open issues or suggest improvements
+
+---
+
+## 🔗 Related packages
+
+Check out other packages in the **smooth** family:
+
+- smooth_bottom_sheet (coming soon)
+- smooth_paywall (coming soon)
+
+More components focused on smooth, production-ready UI.
 
 ## License
 
