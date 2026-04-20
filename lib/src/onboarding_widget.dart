@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'onboarding_controller.dart';
 import 'onboarding_page.dart';
@@ -222,13 +223,63 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
     }
   }
 
-  void _handlePrimaryAction() {
+  Future<void> _handlePrimaryAction() async {
+    if (_isCompleting) {
+      return;
+    }
+
+    final OnboardingPage activePage = widget.pages[_controller.currentPage];
+
+    unawaited(_safeHaptic(HapticFeedback.lightImpact));
+
+    if (activePage.onPrimaryPressed != null) {
+      await activePage.onPrimaryPressed!.call();
+      if (!mounted) {
+        return;
+      }
+
+      if (!activePage.advanceOnPrimaryAction) {
+        return;
+      }
+    }
+
     if (_controller.isLastPage) {
       unawaited(_complete());
       return;
     }
 
     _controller.next();
+  }
+
+  Future<void> _handleSecondaryAction(OnboardingPage activePage) async {
+    if (_isCompleting) {
+      return;
+    }
+
+    unawaited(_safeHaptic(HapticFeedback.selectionClick));
+
+    if (activePage.onSecondaryPressed != null) {
+      await activePage.onSecondaryPressed!.call();
+      if (!mounted) {
+        return;
+      }
+      return;
+    }
+
+    if (_controller.isLastPage) {
+      unawaited(_complete());
+      return;
+    }
+
+    _controller.next();
+  }
+
+  Future<void> _safeHaptic(Future<void> Function() callback) async {
+    try {
+      await callback();
+    } on MissingPluginException {
+      // Haptic channel might be unavailable in tests or unsupported platforms.
+    }
   }
 
   void _handleBack() {
@@ -257,227 +308,70 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
           curve: widget.closeAnimationCurve,
           offset: _isClosing ? const Offset(0, 1) : Offset.zero,
           child: Material(
-              color: resolvedTheme.backgroundColor,
-                child: SafeArea(
-                  child: Padding(
-                    padding: resolvedTheme.pagePadding,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+            color: resolvedTheme.backgroundColor,
+            child: SafeArea(
+              child: Padding(
+                padding: resolvedTheme.pagePadding,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Row(
                       children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            AnimatedSize(
-                              duration: const Duration(milliseconds: 180),
-                              curve: Curves.easeOutCubic,
-                              child: SizedBox(
-                                width: canGoBack ? 32 : 0,
-                                height: 32,
-                                child: canGoBack
-                                    ? IconButton(
-                                        onPressed: _handleBack,
-                                        splashRadius: 16,
-                                        padding: EdgeInsets.zero,
-                                        visualDensity: VisualDensity.compact,
-                                        constraints:
-                                            const BoxConstraints.tightFor(
-                                          width: 32,
-                                          height: 32,
-                                        ),
-                                        iconSize: 18,
-                                        icon: Icon(
-                                          Icons.arrow_back_rounded,
-                                          color: resolvedTheme.progressColor,
-                                        ),
-                                        tooltip: widget.backButtonTooltip,
-                                      )
-                                    : const SizedBox.shrink(),
-                              ),
-                            ),
-                            Expanded(
-                              child: Semantics(
-                                label: widget.progressSemanticsLabel,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(999),
-                                  child: Container(
-                                    height: resolvedTheme.progressHeight,
-                                    color: resolvedTheme.progressTrackColor,
-                                    child: TweenAnimationBuilder<double>(
-                                      tween: Tween<double>(
-                                          begin: 0, end: _controller.progress),
-                                      duration:
-                                          widget.progressAnimationDuration,
-                                      curve: Curves.easeOutCubic,
-                                      builder: (BuildContext context,
-                                          double value, Widget? child) {
-                                        return Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: FractionallySizedBox(
-                                            widthFactor: value.clamp(0.0, 1.0),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    resolvedTheme.progressColor,
-                                                borderRadius:
-                                                    BorderRadius.circular(999),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOutCubic,
+                          child: SizedBox(
+                            width: canGoBack ? 32 : 0,
+                            height: 32,
+                            child: canGoBack
+                                ? IconButton(
+                                    onPressed: _handleBack,
+                                    splashRadius: 16,
+                                    padding: EdgeInsets.zero,
+                                    visualDensity: VisualDensity.compact,
+                                    constraints: const BoxConstraints.tightFor(
+                                      width: 32,
+                                      height: 32,
                                     ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                                    iconSize: 18,
+                                    icon: Icon(
+                                      Icons.arrow_back_rounded,
+                                      color: resolvedTheme.progressColor,
+                                    ),
+                                    tooltip: widget.backButtonTooltip,
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
                         ),
-                        const SizedBox(height: 28),
                         Expanded(
-                          child: widget.pageTransitionType ==
-                                  OnboardingPageTransitionType.slideHorizontal
-                              ? PageView(
-                                  controller: _pageController,
-                                  physics:
-                                      const NeverScrollableScrollPhysics(),
-                                  children: widget.pages
-                                      .map(
-                                        (OnboardingPage p) =>
-                                            _OnboardingPageView(
-                                          page: p,
-                                          titleStyle: resolvedTheme.titleStyle,
-                                          bodyStyle: resolvedTheme.bodyStyle,
-                                          titleColor: resolvedTheme.titleColor,
-                                          bodyColor: resolvedTheme.bodyColor,
-                                        ),
-                                      )
-                                      .toList(),
-                                )
-                              : AnimatedSwitcher(
-                                  duration: widget.contentAnimationDuration,
-                                  switchInCurve: widget.contentAnimationCurve,
-                                  switchOutCurve:
-                                      widget.contentAnimationCurve,
-                                  layoutBuilder: (
-                                    Widget? currentChild,
-                                    List<Widget> previousChildren,
-                                  ) {
-                                    return Stack(
-                                      fit: StackFit.expand,
-                                      clipBehavior: Clip.hardEdge,
-                                      children: <Widget>[
-                                        ...previousChildren,
-                                        if (currentChild != null) currentChild,
-                                      ],
-                                    );
-                                  },
-                                  transitionBuilder: (Widget child,
-                                      Animation<double> animation) {
-                                    if (widget.pageTransitionType ==
-                                        OnboardingPageTransitionType.fade) {
-                                      return FadeTransition(
-                                        opacity: animation,
-                                        child: child,
-                                      );
-                                    }
-
-                                    final bool isIncoming = child.key ==
-                                        ValueKey<int>(_controller.currentPage);
-                                    final double direction =
-                                        _navigationDirection.toDouble();
-                                    final Animation<double> motionAnimation =
-                                        isIncoming
-                                            ? animation
-                                            : ReverseAnimation(animation);
-                                    final Animation<double> curvedMotion =
-                                        CurvedAnimation(
-                                      parent: motionAnimation,
-                                      curve: widget.contentAnimationCurve,
-                                    );
-
-                                    final Animation<Offset> slide =
-                                        Tween<Offset>(
-                                      begin: isIncoming
-                                          ? Offset(direction * 0.08, 0)
-                                          : Offset.zero,
-                                      end: isIncoming
-                                          ? Offset.zero
-                                          : Offset(-direction * 0.08, 0),
-                                    ).animate(curvedMotion);
-
-                                    final Animation<double> scale =
-                                        Tween<double>(
-                                      begin: isIncoming ? 0.985 : 1,
-                                      end: isIncoming ? 1 : 0.985,
-                                    ).animate(CurvedAnimation(
-                                      parent: motionAnimation,
-                                      curve: Curves.easeOutCubic,
-                                    ));
-
-                                    return FadeTransition(
-                                      opacity: animation,
-                                      child: SlideTransition(
-                                        position: slide,
-                                        child: ScaleTransition(
-                                          scale: scale,
-                                          child: child,
+                          child: Semantics(
+                            label: widget.progressSemanticsLabel,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(999),
+                              child: Container(
+                                height: resolvedTheme.progressHeight,
+                                color: resolvedTheme.progressTrackColor,
+                                child: TweenAnimationBuilder<double>(
+                                  tween: Tween<double>(
+                                      begin: 0, end: _controller.progress),
+                                  duration: widget.progressAnimationDuration,
+                                  curve: Curves.easeOutCubic,
+                                  builder: (BuildContext context, double value,
+                                      Widget? child) {
+                                    return Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: FractionallySizedBox(
+                                        widthFactor: value.clamp(0.0, 1.0),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: resolvedTheme.progressColor,
+                                            borderRadius:
+                                                BorderRadius.circular(999),
+                                          ),
                                         ),
                                       ),
                                     );
                                   },
-                                  child: _OnboardingPageView(
-                                    key: ValueKey<int>(
-                                        _controller.currentPage),
-                                    page: activePage,
-                                    titleStyle: resolvedTheme.titleStyle,
-                                    bodyStyle: resolvedTheme.bodyStyle,
-                                    titleColor: resolvedTheme.titleColor,
-                                    bodyColor: resolvedTheme.bodyColor,
-                                  ),
-                                ),
-                        ),
-                        const SizedBox(height: 24),
-                        Align(
-                          alignment: Alignment.center,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                                maxWidth: resolvedTheme.buttonMaxWidth),
-                            child: SizedBox(
-                              height: resolvedTheme.buttonHeight,
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed:
-                                    _isCompleting ? null : _handlePrimaryAction,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: resolvedTheme.buttonColor,
-                                  foregroundColor:
-                                      resolvedTheme.buttonTextColor,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        resolvedTheme.buttonBorderRadius,
-                                  ),
-                                  elevation: 0,
-                                  textStyle: resolvedTheme.buttonStyle,
-                                ),
-                                child: AnimatedSwitcher(
-                                  duration: widget.buttonLabelAnimationDuration,
-                                  transitionBuilder: (Widget child,
-                                      Animation<double> animation) {
-                                    final Animation<Offset> slide =
-                                        Tween<Offset>(
-                                      begin: const Offset(0, 0.18),
-                                      end: Offset.zero,
-                                    ).animate(animation);
-
-                                    return FadeTransition(
-                                      opacity: animation,
-                                      child: SlideTransition(
-                                          position: slide, child: child),
-                                    );
-                                  },
-                                  child: Text(
-                                    actionLabel,
-                                    key: ValueKey<String>(actionLabel),
-                                  ),
                                 ),
                               ),
                             ),
@@ -485,12 +379,176 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 28),
+                    Expanded(
+                      child: widget.pageTransitionType ==
+                              OnboardingPageTransitionType.slideHorizontal
+                          ? PageView(
+                              controller: _pageController,
+                              physics: const NeverScrollableScrollPhysics(),
+                              children: widget.pages
+                                  .map(
+                                    (OnboardingPage p) => _OnboardingPageView(
+                                      page: p,
+                                      titleStyle: resolvedTheme.titleStyle,
+                                      bodyStyle: resolvedTheme.bodyStyle,
+                                      titleColor: resolvedTheme.titleColor,
+                                      bodyColor: resolvedTheme.bodyColor,
+                                    ),
+                                  )
+                                  .toList(),
+                            )
+                          : AnimatedSwitcher(
+                              duration: widget.contentAnimationDuration,
+                              switchInCurve: widget.contentAnimationCurve,
+                              switchOutCurve: widget.contentAnimationCurve,
+                              layoutBuilder: (
+                                Widget? currentChild,
+                                List<Widget> previousChildren,
+                              ) {
+                                return Stack(
+                                  fit: StackFit.expand,
+                                  clipBehavior: Clip.hardEdge,
+                                  children: <Widget>[
+                                    ...previousChildren,
+                                    if (currentChild != null) currentChild,
+                                  ],
+                                );
+                              },
+                              transitionBuilder:
+                                  (Widget child, Animation<double> animation) {
+                                if (widget.pageTransitionType ==
+                                    OnboardingPageTransitionType.fade) {
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  );
+                                }
+
+                                final bool isIncoming = child.key ==
+                                    ValueKey<int>(_controller.currentPage);
+                                final double direction =
+                                    _navigationDirection.toDouble();
+                                final Animation<double> motionAnimation =
+                                    isIncoming
+                                        ? animation
+                                        : ReverseAnimation(animation);
+                                final Animation<double> curvedMotion =
+                                    CurvedAnimation(
+                                  parent: motionAnimation,
+                                  curve: widget.contentAnimationCurve,
+                                );
+
+                                final Animation<Offset> slide = Tween<Offset>(
+                                  begin: isIncoming
+                                      ? Offset(direction * 0.08, 0)
+                                      : Offset.zero,
+                                  end: isIncoming
+                                      ? Offset.zero
+                                      : Offset(-direction * 0.08, 0),
+                                ).animate(curvedMotion);
+
+                                final Animation<double> scale = Tween<double>(
+                                  begin: isIncoming ? 0.985 : 1,
+                                  end: isIncoming ? 1 : 0.985,
+                                ).animate(CurvedAnimation(
+                                  parent: motionAnimation,
+                                  curve: Curves.easeOutCubic,
+                                ));
+
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: slide,
+                                    child: ScaleTransition(
+                                      scale: scale,
+                                      child: child,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: _OnboardingPageView(
+                                key: ValueKey<int>(_controller.currentPage),
+                                page: activePage,
+                                titleStyle: resolvedTheme.titleStyle,
+                                bodyStyle: resolvedTheme.bodyStyle,
+                                titleColor: resolvedTheme.titleColor,
+                                bodyColor: resolvedTheme.bodyColor,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(height: 24),
+                    Align(
+                      alignment: Alignment.center,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                            maxWidth: resolvedTheme.buttonMaxWidth),
+                        child: SizedBox(
+                          height: resolvedTheme.buttonHeight,
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed:
+                                _isCompleting ? null : _handlePrimaryAction,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: resolvedTheme.buttonColor,
+                              foregroundColor: resolvedTheme.buttonTextColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: resolvedTheme.buttonBorderRadius,
+                              ),
+                              elevation: 0,
+                              textStyle: resolvedTheme.buttonStyle,
+                            ),
+                            child: AnimatedSwitcher(
+                              duration: widget.buttonLabelAnimationDuration,
+                              transitionBuilder:
+                                  (Widget child, Animation<double> animation) {
+                                final Animation<Offset> slide = Tween<Offset>(
+                                  begin: const Offset(0, 0.18),
+                                  end: Offset.zero,
+                                ).animate(animation);
+
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                      position: slide, child: child),
+                                );
+                              },
+                              child: Text(
+                                actionLabel,
+                                key: ValueKey<String>(actionLabel),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (activePage.secondaryButtonLabel != null) ...<Widget>[
+                      const SizedBox(height: 8),
+                      Center(
+                        child: TextButton(
+                          onPressed: _isCompleting
+                              ? null
+                              : () => _handleSecondaryAction(activePage),
+                          style: TextButton.styleFrom(
+                            foregroundColor: resolvedTheme.bodyColor ??
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            textStyle: Theme.of(context)
+                                .textTheme
+                                .labelLarge
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          child: Text(activePage.secondaryButtonLabel!),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-            );
-        },
-      );
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

@@ -2,13 +2,13 @@
 
 [![pub package](https://img.shields.io/pub/v/smooth_onboarding.svg)](https://pub.dev/packages/smooth_onboarding)
 [![likes](https://img.shields.io/pub/likes/smooth_onboarding)](https://pub.dev/packages/smooth_onboarding)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-support-FFDD00?logo=buymeacoffee&logoColor=000)](https://buymeacoffee.com/elizavatta)
 
 A smooth, production-ready onboarding UI for Flutter apps.
 
 ✨ Smooth animations • 🎯 Simple API • 📱 Production-ready
 
 Build beautiful onboarding flows in minutes, with smooth animations and zero boilerplate.
-
 
 ![Onboarding Preview](https://raw.githubusercontent.com/eliazv/smooth_onboarding/master/assets/readme/video_example.gif)
 
@@ -23,16 +23,19 @@ See it in action: the example app uses built-in shapes and icons to stay lightwe
 Most onboarding packages are either too basic or too rigid.
 
 `smooth_onboarding` focuses on:
+
 - **Clean, modern UI** out of the box
 - **Smooth, production-level animations**
 - **Simple API** that integrates easily in real apps
-
 
 ## Features
 
 - Animated progress bar with page-based progress.
 - Optional back button that appears from the second page onward.
 - Floating primary button that changes from `Next` to `Get started` on the last page.
+- Built-in haptic feedback on primary and secondary actions.
+- Per-page primary action callback for login/paywall/micro-setup flows.
+- Per-page text-only secondary action (for skippable steps like `Salta`).
 - First-launch persistence via `SharedPreferences`.
 - Dark mode aware default styling.
 - Fully customizable page content with any widget.
@@ -125,6 +128,20 @@ OnboardingGate(
 )
 ```
 
+Per-page custom CTA example (login with skip):
+
+```dart
+OnboardingPage(
+  title: 'Salva tutto in sicurezza',
+  body: const Text('Accedi per sincronizzare su tutti i dispositivi.'),
+  buttonLabel: 'Continua con Google',
+  secondaryButtonLabel: 'Salta',
+  onPrimaryPressed: () async {
+    // Trigger your Google sign-in flow.
+  },
+)
+```
+
 Reset + force gate re-check:
 
 ```dart
@@ -150,7 +167,6 @@ The package is designed around these defaults:
 ## Used in production
 
 This package is used in real Flutter applications.
-
 
 ## Development
 
@@ -188,14 +204,19 @@ If you find this package useful:
 
 ---
 
-## 🔗 Related packages
+## Related smooth packages
 
-Check out other packages in the **smooth** family:
+- [smooth_bottom_sheet](https://pub.dev/packages/smooth_bottom_sheet)
+- [smooth_paywall](https://pub.dev/packages/smooth_paywall)
+- [smooth_charts](https://pub.dev/packages/smooth_charts)
+- [smooth_infinite_tab_bar](https://pub.dev/packages/smooth_infinite_tab_bar)
+- [smooth_auth_sheet](../smooth_auth_sheet/README.md)
+- [smooth_ui_showcase](../smooth_ui_showcase/README.md)
 
-- smooth_bottom_sheet (coming soon)
-- smooth_paywall (coming soon)
+## LLM and SEO keywords
 
-More components focused on smooth, production-ready UI.
+Flutter onboarding, first launch flow, onboarding gate, onboarding persistence,
+animated onboarding pages, login onboarding, paywall onboarding, skippable onboarding.
 
 ## License
 

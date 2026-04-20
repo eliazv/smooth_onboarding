@@ -24,7 +24,7 @@ class ExampleApp extends StatelessWidget {
         useMaterial3: true,
         brightness: Brightness.dark,
       ),
-      themeMode: ThemeMode.light,
+      themeMode: ThemeMode.system,
       home: const _AppShell(),
     );
   }
@@ -39,6 +39,63 @@ class _AppShell extends StatefulWidget {
 
 class _AppShellState extends State<_AppShell> {
   int _reloadToken = 0;
+
+  Future<void> _showActionMessage(String message) async {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  List<OnboardingPage> _buildOnboardingPages() {
+    return <OnboardingPage>[
+      const OnboardingPage(
+        title: 'Do you forget about deadlines?',
+        body: Text(
+          'Bills, documents, subscriptions — keep everything under control automatically. Never miss a deadline again.',
+        ),
+      ),
+      const OnboardingPage(
+        title: 'Manage everything in one place',
+        body: _UseCasesBody(),
+      ),
+      const OnboardingPage(
+        title: 'Try it now',
+        body: _MicroSetupBody(),
+        buttonLabel: 'Create first deadline',
+      ),
+      const OnboardingPage(
+        title: 'Get notified in time?',
+        body: _NotificationBody(),
+        buttonLabel: 'Enable notifications',
+      ),
+      OnboardingPage(
+        title: 'Save everything securely',
+        body: const _LoginBody(),
+        buttonLabel: 'Continue with Google',
+        secondaryButtonLabel: 'Skip',
+        onPrimaryPressed: () async {
+          await _showActionMessage(
+            'Google Sign-In triggered (connect your real auth SDK here)',
+          );
+        },
+      ),
+      OnboardingPage(
+        title: 'Unlock Pro features',
+        body: const _PaywallBody(),
+        buttonLabel: 'Try free for 7 days',
+        secondaryButtonLabel: 'Skip',
+        onPrimaryPressed: () async {
+          await _showActionMessage(
+            'Free trial triggered (connect RevenueCat or billing here)',
+          );
+        },
+      ),
+    ];
+  }
 
   Future<void> _resetOnboarding() async {
     await OnboardingStorage.reset();
@@ -56,32 +113,15 @@ class _AppShellState extends State<_AppShell> {
     return OnboardingGate(
       reloadTrigger: _reloadToken,
       storageKey: OnboardingStorage.defaultStorageKey,
-      pages: const <OnboardingPage>[
-        OnboardingPage(
-          title: 'Welcome to smooth_onboarding',
-          body: Text(
-            'A clean and reusable onboarding flow for your Flutter projects.',
-          ),
-        ),
-        OnboardingPage(
-          title: 'Modern motion',
-          body: _OnboardingIllustration(),
-        ),
-        OnboardingPage(
-          title: 'Production ready',
-          body: Text(
-            'First-launch persistence, dark mode, customizable theme, and simple API.',
-          ),
-        ),
-      ],
-      nextButtonLabel: 'Next',
-      doneButtonLabel: 'Get started',
+      pages: _buildOnboardingPages(),
+      nextButtonLabel: 'Continue',
+      doneButtonLabel: 'Start app',
       backButtonTooltip: 'Back',
       progressSemanticsLabel: 'Onboarding progress',
       showBackButton: true,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Demo app'),
+          title: const Text('Onboarding Example'),
           actions: <Widget>[
             IconButton(
               tooltip: 'Reset onboarding',
@@ -99,13 +139,13 @@ class _AppShellState extends State<_AppShell> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const <Widget>[
                   Text(
-                    'Onboarding completed.',
+                    'Onboarding Complete!',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 12),
                   Text(
-                    'Use the top-right action to reset the flag and replay the full flow.',
+                    'Tap the button in the top-right to reset and replay the onboarding.',
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -118,6 +158,131 @@ class _AppShellState extends State<_AppShell> {
   }
 }
 
+// ignore: unused_element
+class _HookBody extends StatelessWidget {
+  const _HookBody();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          'Bills, documents, subscriptions — everything organized automatically.',
+        ),
+        SizedBox(height: 12),
+        Text('Never miss an important deadline.'),
+      ],
+    );
+  }
+}
+
+class _UseCasesBody extends StatelessWidget {
+  const _UseCasesBody();
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final List<String> items = <String>[
+      'Bills and payments',
+      'Subscriptions (Netflix, Spotify...)',
+      'Documents and renewals',
+      'Custom reminders',
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        for (final String item in items) ...<Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(Icons.check_circle_outline, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  item,
+                  style: theme.textTheme.bodyLarge,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ],
+      ],
+    );
+  }
+}
+
+class _MicroSetupBody extends StatelessWidget {
+  const _MicroSetupBody();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text('Nome: Bolletta luce'),
+            SizedBox(height: 8),
+            Text('Data: 26 Aprile 2026 (suggerita)'),
+            SizedBox(height: 8),
+            Text('Reminder: automatico 3 giorni prima'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationBody extends StatelessWidget {
+  const _NotificationBody();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      'We notify you before every important deadline, at the right time.',
+    );
+  }
+}
+
+class _LoginBody extends StatelessWidget {
+  const _LoginBody();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      'Sign in to sync across all devices and keep your data safe.',
+    );
+  }
+}
+
+class _PaywallBody extends StatelessWidget {
+  const _PaywallBody();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text('You have already created your first deadline.'),
+        SizedBox(height: 12),
+        Text('With Pro you get:'),
+        SizedBox(height: 8),
+        Text('- More deadlines'),
+        Text('- Secure backup'),
+        Text('- No limits'),
+      ],
+    );
+  }
+}
+
+// ignore: unused_element
 class _OnboardingIllustration extends StatelessWidget {
   const _OnboardingIllustration();
 
