@@ -67,10 +67,16 @@ class _AppShellState extends State<_AppShell> {
         body: _MicroSetupBody(),
         buttonLabel: 'Create first deadline',
       ),
-      const OnboardingPage(
+      OnboardingPage(
         title: 'Get notified in time?',
-        body: _NotificationBody(),
+        body: const _NotificationBody(),
         buttonLabel: 'Enable notifications',
+        onPrimaryPressed: () async {
+          // Hook your real push permission flow here (FCM/local notifications).
+          await _showActionMessage(
+            'Notification permission flow triggered (connect your real notification SDK here)',
+          );
+        },
       ),
       OnboardingPage(
         title: 'Save everything securely',

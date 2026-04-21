@@ -6,7 +6,7 @@
 
 A smooth, production-ready onboarding UI for Flutter apps.
 
-✨ Smooth animations • 🎯 Simple API • 📱 Production-ready
+Smooth animations. Simple API. Production-ready.
 
 Build beautiful onboarding flows in minutes, with smooth animations and zero boilerplate.
 
@@ -24,33 +24,33 @@ Most onboarding packages are either too basic or too rigid.
 
 `smooth_onboarding` focuses on:
 
-- **Clean, modern UI** out of the box
-- **Smooth, production-level animations**
-- **Simple API** that integrates easily in real apps
+- Clean, modern UI out of the box
+- Smooth, production-level animations
+- Simple API that integrates easily in real apps
 
 ## Features
 
-- Animated progress bar with page-based progress.
-- Optional back button that appears from the second page onward.
-- Floating primary button that changes from `Next` to `Get started` on the last page.
-- Built-in haptic feedback on primary and secondary actions.
-- Per-page primary action callback for login/paywall/micro-setup flows.
-- Per-page text-only secondary action (for skippable steps like `Salta`).
-- First-launch persistence via `SharedPreferences`.
-- Dark mode aware default styling.
-- Fully customizable page content with any widget.
-- Customizable labels (`next`, `done`, `back` tooltip).
-- Optional back button toggle (`showBackButton`).
-- Configurable animation durations and progress semantics label.
-- Configurable page transition style: horizontal slide (default), shared-axis, or fade.
-- Modern completion animation that slides the whole screen upward.
-- External reload trigger for programmatic onboarding reset.
+- Animated progress bar with page-based progress
+- Optional back button that appears from the second page onward
+- Floating primary button that changes from `Next` to `Get started` on the last page
+- Built-in haptic feedback on primary and secondary actions
+- Per-page primary action callback for login, paywall, micro-setup, or notification flows
+- Per-page text-only secondary action for skippable steps like `Salta`
+- First-launch persistence via `SharedPreferences`
+- Dark mode aware default styling
+- Fully customizable page content with any widget
+- Customizable labels (`next`, `done`, `back` tooltip)
+- Optional back button toggle (`showBackButton`)
+- Configurable animation durations and progress semantics label
+- Configurable page transition style: horizontal slide, shared-axis, or fade
+- Modern completion animation that slides the whole screen upward
+- External reload trigger for programmatic onboarding reset
 
 ## Installation
 
 ```yaml
 dependencies:
-  smooth_onboarding: ^0.2.2
+  smooth_onboarding: ^0.2.3
 ```
 
 ## Usage
@@ -142,7 +142,20 @@ OnboardingPage(
 )
 ```
 
-Reset + force gate re-check:
+Per-page custom CTA example (enable notifications):
+
+```dart
+OnboardingPage(
+  title: 'Get notified in time?',
+  body: const Text('Enable notifications to receive reminders.'),
+  buttonLabel: 'Enable notifications',
+  onPrimaryPressed: () async {
+    // Trigger your real notifications permission flow here.
+  },
+)
+```
+
+Reset and force the gate to re-check:
 
 ```dart
 await OnboardingStorage.reset();
@@ -157,12 +170,12 @@ Then pass `reloadTrigger: reloadToken` to `OnboardingGate`.
 
 The package is designed around these defaults:
 
-- White background in light mode.
-- Dark gray background in dark mode.
-- Blue progress bar and blue primary button.
-- Horizontal slide transitions between pages (no fade).
-- Full-screen close animation that moves the onboarding upward.
-- Small back arrow with a compact hit area.
+- White background in light mode
+- Dark gray background in dark mode
+- Blue progress bar and blue primary button
+- Horizontal slide transitions between pages
+- Full-screen close animation that moves the onboarding upward
+- Small back arrow with a compact hit area
 
 ## Used in production
 
@@ -179,30 +192,15 @@ flutter test
 
 ---
 
-## 👨‍💻 Author
+## Author
 
-Created by Elia Zavatta
+Created by **Elia Zavatta**.
 
 I build production-ready Flutter apps and reusable UI components.
 
-👉 Need help integrating this package or building your app?
-Feel free to reach out:
-
-- GitHub: https://github.com/eliazv
-- LinkedIn: https://www.linkedin.com/in/eliazavatta/
-- Email: info@eliazavatta.it
-
----
-
-## ⭐ Support
-
-If you find this package useful:
-
-- ⭐ Star the repo on GitHub
-- 👍 Like it on pub.dev
-- 🐛 Open issues or suggest improvements
-
----
+- GitHub: [github.com/eliazv](https://github.com/eliazv)
+- LinkedIn: [linkedin.com/in/eliazavatta](https://www.linkedin.com/in/eliazavatta/)
+- Email: [info@eliazavatta.it](mailto:info@eliazavatta.it)
 
 ## Related smooth packages
 
@@ -210,8 +208,8 @@ If you find this package useful:
 - [smooth_paywall](https://pub.dev/packages/smooth_paywall)
 - [smooth_charts](https://pub.dev/packages/smooth_charts)
 - [smooth_infinite_tab_bar](https://pub.dev/packages/smooth_infinite_tab_bar)
-- [smooth_auth_sheet](../smooth_auth_sheet/README.md)
-- [smooth_ui_showcase](../smooth_ui_showcase/README.md)
+- [smooth_auth_sheet](https://pub.dev/packages/smooth_auth_sheet)
+- [smooth_toast](https://pub.dev/packages/smooth_toast)
 
 ## LLM and SEO keywords
 
