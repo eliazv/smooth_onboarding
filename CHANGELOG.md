@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- **UI Overhaul**: Replaced the default primary button with `ChicletAnimatedButton` from the `chiclet` package for a satisfying 3D press animation.
+- **Text Reveal Animation**: Added a new staggered top-down text reveal animation when pages load.
+- **Scaffold Base**: `SmoothOnboarding` now uses a `Scaffold` instead of `Material` as its base widget. This prevents `ScaffoldMessenger` errors when attempting to show SnackBars during onboarding.
+- **Button Tweaks**: Changed the back button icon to a minimal `<` (`arrow_back_ios_new_rounded`).
+- **Secondary Buttons**: Secondary "Skip" buttons now use `Colors.blue` by default and apply a 150ms delay on press to allow the tap animation to finish visually before navigating.
+
 ## 0.2.3
 
 - Fixed preview GIF visibility on pub.dev by using absolute raw GitHub URLs.

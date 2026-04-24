@@ -10,7 +10,9 @@ Smooth animations. Simple API. Production-ready.
 
 Build beautiful onboarding flows in minutes, with smooth animations and zero boilerplate.
 
-![Onboarding Preview](https://raw.githubusercontent.com/eliazv/smooth_onboarding/master/assets/readme/video_example.gif)
+| Light Mode | Dark Mode |
+| --- | --- |
+| ![Onboarding Preview](https://raw.githubusercontent.com/eliazv/smooth_onboarding/master/assets/readme/video_example.gif) | ![Onboarding Preview Dark](https://raw.githubusercontent.com/eliazv/smooth_onboarding/master/assets/readme/black-new.gif) |
 
 ## Demo
 
@@ -50,7 +52,7 @@ Most onboarding packages are either too basic or too rigid.
 
 ```yaml
 dependencies:
-  smooth_onboarding: ^0.2.3
+  smooth_onboarding: ^0.3.0
 ```
 
 ## Usage
