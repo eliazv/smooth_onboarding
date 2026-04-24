@@ -239,7 +239,7 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> with TickerProvider
     }
 
     // Delay to let the ChicletButton visual squish animation complete.
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future<void>.delayed(const Duration(milliseconds: 150));
 
     final OnboardingPage activePage = widget.pages[_controller.currentPage];
 
@@ -270,7 +270,7 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> with TickerProvider
     }
 
     // Delay to let the button ripple/press animation complete.
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future<void>.delayed(const Duration(milliseconds: 150));
 
     unawaited(_safeHaptic(HapticFeedback.selectionClick));
 
