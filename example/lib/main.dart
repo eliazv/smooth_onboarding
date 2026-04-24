@@ -71,6 +71,7 @@ class _AppShellState extends State<_AppShell> {
         title: 'Get notified in time?',
         body: const _NotificationBody(),
         buttonLabel: 'Enable notifications',
+        secondaryButtonLabel: 'Skip',
         onPrimaryPressed: () async {
           // Hook your real push permission flow here (FCM/local notifications).
           await _showActionMessage(

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:chiclet/chiclet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -107,9 +108,10 @@ class SmoothOnboarding extends StatefulWidget {
   State<SmoothOnboarding> createState() => _SmoothOnboardingState();
 }
 
-class _SmoothOnboardingState extends State<SmoothOnboarding> {
+class _SmoothOnboardingState extends State<SmoothOnboarding> with TickerProviderStateMixin {
   late OnboardingController _controller;
   late PageController _pageController;
+  late AnimationController _textRevealController;
 
   bool _ownsController = false;
   bool _isCompleting = false;
@@ -122,6 +124,11 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
     super.initState();
     _pageController = PageController();
     _initializeController();
+    _textRevealController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _textRevealController.forward();
   }
 
   @override
@@ -148,6 +155,7 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
   @override
   void dispose() {
     _pageController.dispose();
+    _textRevealController.dispose();
     _controller.removeListener(_onControllerChanged);
     if (_ownsController) {
       _controller.dispose();
@@ -173,6 +181,8 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
     _lastPageIndex = nextPage;
 
     if (!mounted) return;
+
+    _textRevealController.forward(from: 0.0);
 
     if (widget.pageTransitionType ==
             OnboardingPageTransitionType.slideHorizontal &&
@@ -228,6 +238,9 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
       return;
     }
 
+    // Delay to let the ChicletButton visual squish animation complete.
+    await Future.delayed(const Duration(milliseconds: 150));
+
     final OnboardingPage activePage = widget.pages[_controller.currentPage];
 
     unawaited(_safeHaptic(HapticFeedback.lightImpact));
@@ -255,6 +268,9 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
     if (_isCompleting) {
       return;
     }
+
+    // Delay to let the button ripple/press animation complete.
+    await Future.delayed(const Duration(milliseconds: 150));
 
     unawaited(_safeHaptic(HapticFeedback.selectionClick));
 
@@ -307,9 +323,9 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
           duration: widget.closeAnimationDuration,
           curve: widget.closeAnimationCurve,
           offset: _isClosing ? const Offset(0, 1) : Offset.zero,
-          child: Material(
-            color: resolvedTheme.backgroundColor,
-            child: SafeArea(
+          child: Scaffold(
+            backgroundColor: resolvedTheme.backgroundColor,
+            body: SafeArea(
               child: Padding(
                 padding: resolvedTheme.pagePadding,
                 child: Column(
@@ -335,7 +351,7 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
                                     ),
                                     iconSize: 18,
                                     icon: Icon(
-                                      Icons.arrow_back_rounded,
+                                      Icons.arrow_back_ios_new_rounded,
                                       color: resolvedTheme.progressColor,
                                     ),
                                     tooltip: widget.backButtonTooltip,
@@ -394,6 +410,7 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
                                       bodyStyle: resolvedTheme.bodyStyle,
                                       titleColor: resolvedTheme.titleColor,
                                       bodyColor: resolvedTheme.bodyColor,
+                                      revealAnimation: _textRevealController,
                                     ),
                                   )
                                   .toList(),
@@ -474,48 +491,54 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
                                 bodyStyle: resolvedTheme.bodyStyle,
                                 titleColor: resolvedTheme.titleColor,
                                 bodyColor: resolvedTheme.bodyColor,
+                                revealAnimation: _textRevealController,
                               ),
                             ),
                     ),
                     const SizedBox(height: 24),
-                    Align(
-                      alignment: Alignment.center,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                            maxWidth: resolvedTheme.buttonMaxWidth),
-                        child: SizedBox(
-                          height: resolvedTheme.buttonHeight,
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed:
-                                _isCompleting ? null : _handlePrimaryAction,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: resolvedTheme.buttonColor,
-                              foregroundColor: resolvedTheme.buttonTextColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: resolvedTheme.buttonBorderRadius,
-                              ),
-                              elevation: 0,
-                              textStyle: resolvedTheme.buttonStyle,
-                            ),
-                            child: AnimatedSwitcher(
-                              duration: widget.buttonLabelAnimationDuration,
-                              transitionBuilder:
-                                  (Widget child, Animation<double> animation) {
-                                final Animation<Offset> slide = Tween<Offset>(
-                                  begin: const Offset(0, 0.18),
-                                  end: Offset.zero,
-                                ).animate(animation);
+                    FadeTransition(
+                      opacity: CurvedAnimation(
+                        parent: _textRevealController,
+                        curve: const Interval(0.8, 1.0, curve: Curves.easeIn),
+                      ),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                              maxWidth: resolvedTheme.buttonMaxWidth),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ChicletAnimatedButton(
+                              onPressed:
+                                  _isCompleting ? null : () => _handlePrimaryAction(),
+                              backgroundColor: resolvedTheme.buttonColor ?? Theme.of(context).primaryColor,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: AnimatedSwitcher(
+                                duration: widget.buttonLabelAnimationDuration,
+                                transitionBuilder:
+                                    (Widget child, Animation<double> animation) {
+                                  final Animation<Offset> slide = Tween<Offset>(
+                                    begin: const Offset(0, 0.18),
+                                    end: Offset.zero,
+                                  ).animate(animation);
 
-                                return FadeTransition(
-                                  opacity: animation,
-                                  child: SlideTransition(
-                                      position: slide, child: child),
-                                );
-                              },
-                              child: Text(
-                                actionLabel,
-                                key: ValueKey<String>(actionLabel),
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: SlideTransition(
+                                        position: slide, child: child),
+                                  );
+                                },
+                                child: Text(
+                                  actionLabel,
+                                  key: ValueKey<String>(actionLabel),
+                                  style: resolvedTheme.buttonStyle?.copyWith(
+                                    color: resolvedTheme.buttonTextColor,
+                                  ) ?? TextStyle(
+                                    color: resolvedTheme.buttonTextColor ?? Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -524,20 +547,25 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> {
                     ),
                     if (activePage.secondaryButtonLabel != null) ...<Widget>[
                       const SizedBox(height: 8),
-                      Center(
-                        child: TextButton(
-                          onPressed: _isCompleting
-                              ? null
-                              : () => _handleSecondaryAction(activePage),
-                          style: TextButton.styleFrom(
-                            foregroundColor: resolvedTheme.bodyColor ??
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                            textStyle: Theme.of(context)
-                                .textTheme
-                                .labelLarge
-                                ?.copyWith(fontWeight: FontWeight.w600),
+                      FadeTransition(
+                        opacity: CurvedAnimation(
+                          parent: _textRevealController,
+                          curve: const Interval(0.8, 1.0, curve: Curves.easeIn),
+                        ),
+                        child: Center(
+                          child: TextButton(
+                            onPressed: _isCompleting
+                                ? null
+                                : () => _handleSecondaryAction(activePage),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.blue,
+                              textStyle: Theme.of(context)
+                                  .textTheme
+                                  .labelLarge
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            child: Text(activePage.secondaryButtonLabel!),
                           ),
-                          child: Text(activePage.secondaryButtonLabel!),
                         ),
                       ),
                     ],
@@ -560,6 +588,7 @@ class _OnboardingPageView extends StatelessWidget {
     required this.bodyStyle,
     required this.titleColor,
     required this.bodyColor,
+    required this.revealAnimation,
   });
 
   final OnboardingPage page;
@@ -567,45 +596,63 @@ class _OnboardingPageView extends StatelessWidget {
   final TextStyle? bodyStyle;
   final Color? titleColor;
   final Color? bodyColor;
+  final Animation<double> revealAnimation;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 24, bottom: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    page.title,
-                    style: titleStyle?.copyWith(color: titleColor) ??
-                        Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: titleColor,
-                            ),
-                  ),
-                  const SizedBox(height: 20),
-                  DefaultTextStyle.merge(
-                    style: bodyStyle?.copyWith(color: bodyColor) ??
-                        Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              height: 1.45,
-                              color: bodyColor,
-                            ) ??
-                        TextStyle(color: bodyColor),
-                    child: page.body,
-                  ),
-                ],
-              ),
-            ),
-          ),
+    return AnimatedBuilder(
+      animation: revealAnimation,
+      builder: (BuildContext context, Widget? child) {
+        return ShaderMask(
+          shaderCallback: (Rect bounds) {
+            return LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: const <Color>[Colors.white, Colors.transparent],
+              stops: <double>[revealAnimation.value, revealAnimation.value + 0.15],
+            ).createShader(bounds);
+          },
+          blendMode: BlendMode.dstIn,
+          child: child,
         );
       },
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 24, bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(
+                      page.title,
+                      style: titleStyle?.copyWith(color: titleColor) ??
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: titleColor,
+                              ),
+                    ),
+                    const SizedBox(height: 20),
+                    DefaultTextStyle.merge(
+                      style: bodyStyle?.copyWith(color: bodyColor) ??
+                          Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                height: 1.45,
+                                color: bodyColor,
+                              ) ??
+                          TextStyle(color: bodyColor),
+                      child: page.body,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
