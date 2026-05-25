@@ -444,32 +444,30 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> with TickerProvider
 
                                 final bool isIncoming = child.key ==
                                     ValueKey<int>(_controller.currentPage);
+
+                                // Outgoing page disappears instantly — no exit animation.
+                                if (!isIncoming) {
+                                  return Opacity(opacity: 0.0, child: child);
+                                }
+
                                 final double direction =
                                     _navigationDirection.toDouble();
-                                final Animation<double> motionAnimation =
-                                    isIncoming
-                                        ? animation
-                                        : ReverseAnimation(animation);
                                 final Animation<double> curvedMotion =
                                     CurvedAnimation(
-                                  parent: motionAnimation,
+                                  parent: animation,
                                   curve: widget.contentAnimationCurve,
                                 );
 
                                 final Animation<Offset> slide = Tween<Offset>(
-                                  begin: isIncoming
-                                      ? Offset(direction * 0.08, 0)
-                                      : Offset.zero,
-                                  end: isIncoming
-                                      ? Offset.zero
-                                      : Offset(-direction * 0.08, 0),
+                                  begin: Offset(direction * 0.08, 0),
+                                  end: Offset.zero,
                                 ).animate(curvedMotion);
 
                                 final Animation<double> scale = Tween<double>(
-                                  begin: isIncoming ? 0.985 : 1,
-                                  end: isIncoming ? 1 : 0.985,
+                                  begin: 0.985,
+                                  end: 1.0,
                                 ).animate(CurvedAnimation(
-                                  parent: motionAnimation,
+                                  parent: animation,
                                   curve: Curves.easeOutCubic,
                                 ));
 
@@ -501,74 +499,94 @@ class _SmoothOnboardingState extends State<SmoothOnboarding> with TickerProvider
                         parent: _textRevealController,
                         curve: const Interval(0.8, 1.0, curve: Curves.easeIn),
                       ),
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                              maxWidth: resolvedTheme.buttonMaxWidth),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ChicletAnimatedButton(
-                              onPressed:
-                                  _isCompleting ? null : () => _handlePrimaryAction(),
-                              backgroundColor: resolvedTheme.buttonColor ?? Theme.of(context).primaryColor,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              child: AnimatedSwitcher(
-                                duration: widget.buttonLabelAnimationDuration,
-                                transitionBuilder:
-                                    (Widget child, Animation<double> animation) {
-                                  final Animation<Offset> slide = Tween<Offset>(
-                                    begin: const Offset(0, 0.18),
-                                    end: Offset.zero,
-                                  ).animate(animation);
+                      child: activePage.actionsBuilder != null
+                          ? activePage.actionsBuilder!(context)
+                          : Align(
+                              alignment: Alignment.center,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                    maxWidth: resolvedTheme.buttonMaxWidth),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: <Widget>[
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ChicletAnimatedButton(
+                                        onPressed: _isCompleting
+                                            ? null
+                                            : () => _handlePrimaryAction(),
+                                        backgroundColor:
+                                            resolvedTheme.buttonColor ??
+                                                Theme.of(context).primaryColor,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12),
+                                        child: AnimatedSwitcher(
+                                          duration: widget
+                                              .buttonLabelAnimationDuration,
+                                          transitionBuilder: (Widget child,
+                                              Animation<double> animation) {
+                                            final Animation<Offset> slide =
+                                                Tween<Offset>(
+                                              begin: const Offset(0, 0.18),
+                                              end: Offset.zero,
+                                            ).animate(animation);
 
-                                  return FadeTransition(
-                                    opacity: animation,
-                                    child: SlideTransition(
-                                        position: slide, child: child),
-                                  );
-                                },
-                                child: Text(
-                                  actionLabel,
-                                  key: ValueKey<String>(actionLabel),
-                                  style: resolvedTheme.buttonStyle?.copyWith(
-                                    color: resolvedTheme.buttonTextColor,
-                                  ) ?? TextStyle(
-                                    color: resolvedTheme.buttonTextColor ?? Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                            return FadeTransition(
+                                              opacity: animation,
+                                              child: SlideTransition(
+                                                  position: slide,
+                                                  child: child),
+                                            );
+                                          },
+                                          child: Text(
+                                            actionLabel,
+                                            key: ValueKey<String>(actionLabel),
+                                            style: resolvedTheme.buttonStyle
+                                                    ?.copyWith(
+                                                  color: resolvedTheme
+                                                      .buttonTextColor,
+                                                ) ??
+                                                TextStyle(
+                                                  color: resolvedTheme
+                                                          .buttonTextColor ??
+                                                      Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    if (activePage.secondaryButtonLabel !=
+                                        null) ...<Widget>[
+                                      const SizedBox(height: 8),
+                                      Center(
+                                        child: TextButton(
+                                          onPressed: _isCompleting
+                                              ? null
+                                              : () => _handleSecondaryAction(
+                                                  activePage),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: Colors.blue,
+                                            textStyle: Theme.of(context)
+                                                .textTheme
+                                                .labelLarge
+                                                ?.copyWith(
+                                                    fontWeight:
+                                                        FontWeight.w600),
+                                          ),
+                                          child: Text(
+                                              activePage.secondaryButtonLabel!),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                      ),
                     ),
-                    if (activePage.secondaryButtonLabel != null) ...<Widget>[
-                      const SizedBox(height: 8),
-                      FadeTransition(
-                        opacity: CurvedAnimation(
-                          parent: _textRevealController,
-                          curve: const Interval(0.8, 1.0, curve: Curves.easeIn),
-                        ),
-                        child: Center(
-                          child: TextButton(
-                            onPressed: _isCompleting
-                                ? null
-                                : () => _handleSecondaryAction(activePage),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.blue,
-                              textStyle: Theme.of(context)
-                                  .textTheme
-                                  .labelLarge
-                                  ?.copyWith(fontWeight: FontWeight.w600),
-                            ),
-                            child: Text(activePage.secondaryButtonLabel!),
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -618,6 +636,20 @@ class _OnboardingPageView extends StatelessWidget {
       },
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
+          if (page.fullBody) {
+            return SizedBox(
+              height: constraints.maxHeight,
+              child: DefaultTextStyle.merge(
+                style: bodyStyle?.copyWith(color: bodyColor) ??
+                    Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          height: 1.45,
+                          color: bodyColor,
+                        ) ??
+                    TextStyle(color: bodyColor),
+                child: page.body,
+              ),
+            );
+          }
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: ConstrainedBox(

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+- **`fullBody` page option**: When `fullBody: true`, the page body fills the entire available height and bypasses the built-in title + scroll wrapper. Useful for full-screen custom layouts that rely on `Expanded` or other bounded-height widgets.
+- **`actionsBuilder` page option**: Replaces the entire bottom CTA zone with a custom widget builder. Use when a page needs multiple action buttons, custom button styles, or a completely different actions layout.
+- **Animation fix**: Outgoing pages now disappear instantly instead of playing a reverse exit animation, resulting in cleaner forward-only transitions.
+- **Secondary button layout**: Moved the secondary button inside the same constrained box as the primary button for consistent horizontal alignment.
+
 ## 0.3.0
 
 - **UI Overhaul**: Replaced the default primary button with `ChicletAnimatedButton` from the `chiclet` package for a satisfying 3D press animation.

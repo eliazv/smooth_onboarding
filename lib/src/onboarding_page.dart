@@ -12,6 +12,8 @@ class OnboardingPage {
     this.advanceOnPrimaryAction = true,
     this.secondaryButtonLabel,
     this.onSecondaryPressed,
+    this.fullBody = false,
+    this.actionsBuilder,
   });
 
   /// The page title.
@@ -43,4 +45,18 @@ class OnboardingPage {
   /// If null and [secondaryButtonLabel] is set, tapping the secondary button
   /// advances to next page or completes when on the last page.
   final Future<void> Function()? onSecondaryPressed;
+
+  /// When true, the body fills the entire available height and the built-in
+  /// title + scroll wrapper are bypassed. Use this for full-screen custom layouts
+  /// that rely on [Expanded] or other bounded-height widgets.
+  final bool fullBody;
+
+  /// Optional builder that replaces the entire bottom CTA zone (primary button
+  /// and secondary button) with a custom widget. Use this when a page needs
+  /// multiple action buttons, custom button styles, or a completely different
+  /// actions layout. The builder receives the current [BuildContext].
+  ///
+  /// When set, [buttonLabel], [onPrimaryPressed], [advanceOnPrimaryAction],
+  /// [secondaryButtonLabel], and [onSecondaryPressed] are all ignored.
+  final Widget Function(BuildContext context)? actionsBuilder;
 }
