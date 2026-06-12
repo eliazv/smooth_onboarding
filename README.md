@@ -2,9 +2,12 @@
 
 [![pub package](https://img.shields.io/pub/v/smooth_onboarding.svg)](https://pub.dev/packages/smooth_onboarding)
 [![likes](https://img.shields.io/pub/likes/smooth_onboarding)](https://pub.dev/packages/smooth_onboarding)
+[![Live demo](https://img.shields.io/badge/Live-demo-2ea44f?logo=flutter&logoColor=white)](https://eliazv.github.io/smooth_onboarding/)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-support-FFDD00?logo=buymeacoffee&logoColor=000)](https://buymeacoffee.com/elizavatta)
 
 A smooth, production-ready onboarding UI for Flutter apps.
+
+👉 **[Try the live demo](https://eliazv.github.io/smooth_onboarding/)** — interact with the onboarding flow in your browser.
 
 Smooth animations. Simple API. Production-ready.
 
